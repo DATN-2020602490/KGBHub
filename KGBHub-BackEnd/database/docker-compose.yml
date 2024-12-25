@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:bullseye
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gwyn}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gwyn_trader}
+      PGDATA: /data/postgres
+    volumes:
+      - ./postgres:/data/postgres
+    ports:
+      - 5432:5432
+    networks:
+      - databases
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - ./redis:/data
+    ports:
+      - 6379:6379
+    networks:
+      - databases
+    restart: unless-stopped
+
+networks:
+  databases:
+    name: databases

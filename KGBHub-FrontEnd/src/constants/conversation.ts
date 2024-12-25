@@ -1,0 +1,33 @@
+export const CONVERSATION_TYPE = {
+  CLOUD_SAVE: 'CLOUD_SAVE',
+  DM: 'DM',
+  COURSE_GROUP_CHAT: 'COURSE_GROUP_CHAT',
+  GROUP_CHAT: 'GROUP_CHAT',
+}
+
+export const CHAT_MEMBER_ROLE = {
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+}
+
+export const MEMBER_STATUS = {
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  ARCHIVED: 'ARCHIVED',
+  REMOVED: 'REMOVED',
+}
+
+export const CALL_TYPE = {
+  VIDEO: 'VIDEO',
+  AUDIO: 'AUDIO',
+}
+
+export const MESSAGE_TYPE = {
+  DEFAULT: 'DEFAULT',
+  CALL: 'CALL',
+}
+
+export const USER_VIEW = {
+  SENDER: 'SENDER',
+  RECEIVER: 'RECEIVER',
+}
