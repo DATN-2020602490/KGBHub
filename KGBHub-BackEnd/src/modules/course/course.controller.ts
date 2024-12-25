@@ -248,7 +248,6 @@ export default class CourseController extends BaseController {
         totalPart: parts.length,
         thumbnailFileId: thumbnail.id,
         totalLesson: lessonsLength,
-        // status: CourseStatus.PENDING,
         priceAmount: priceAmount || 0,
         currency: Currency.USD,
       },
@@ -266,7 +265,7 @@ export default class CourseController extends BaseController {
     });
     await stripe.products.update(course.products[0].productStripeId as string, {
       name: courseName,
-      description: descriptionMD,
+      description: convert(descriptionMD),
     });
     const newCourse = await getCourse(id, reqUser.id);
     res.status(200).data(newCourse);
@@ -317,9 +316,7 @@ export default class CourseController extends BaseController {
 
     if (
       coursePaids.some(
-        (paid) =>
-          paid.isFree ||
-          (paid.order && paid.order.status === OrderStatus.SUCCESS),
+        (paid) => paid.order && paid.order.status === OrderStatus.SUCCESS,
       ) &&
       course.userId === reqUser.id &&
       !reqUser.roles.some((role) => role.role.name === RoleEnum.ADMIN)

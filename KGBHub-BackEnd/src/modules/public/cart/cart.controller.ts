@@ -43,14 +43,7 @@ export default class CartController extends BaseController {
       where: {
         courseId,
         userId: reqUser.id,
-        OR: [
-          {
-            isFree: true,
-          },
-          {
-            order: { status: OrderStatus.SUCCESS },
-          },
-        ],
+        order: { status: OrderStatus.SUCCESS },
       },
       include: { order: true },
     });

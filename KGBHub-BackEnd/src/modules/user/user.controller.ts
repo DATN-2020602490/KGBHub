@@ -183,7 +183,6 @@ export default class UserController extends BaseController {
     if (!user) {
       throw new NotFoundException("user", id);
     }
-    delete user.refreshToken;
     return res.status(200).data(user);
   };
   getProfile = async (req: KGBRequest, res: KGBResponse) => {
@@ -201,10 +200,6 @@ export default class UserController extends BaseController {
     if (!user) {
       throw new NotFoundException("user", req.user.id);
     }
-    delete user.platform;
-    delete user.refreshToken;
-    delete user.firstTime;
-    delete user.roles;
     res.status(200).data(user);
   };
 
@@ -381,10 +376,7 @@ export default class UserController extends BaseController {
             where: {
               userId: req.user.id,
               courseId: course.id,
-              OR: [
-                { isFree: true },
-                { order: { status: OrderStatus.SUCCESS } },
-              ],
+              order: { status: OrderStatus.SUCCESS },
             },
           }),
           this.prisma.lessonDone.findMany({
@@ -562,7 +554,7 @@ export default class UserController extends BaseController {
   getRandomQuote = async (_, res: KGBResponse) => {
     const quoteLength = QUOTES.length;
     let randomIndex = Math.floor(Math.random() * quoteLength);
-    while (QUOTES[randomIndex].quote.length > 100) {
+    while (QUOTES[randomIndex].quote.length > 200) {
       randomIndex = Math.floor(Math.random() * quoteLength);
     }
     res.status(200).data(QUOTES[randomIndex]);

@@ -11,12 +11,19 @@ import prisma from "../../prisma";
 import stripe from "../../configs/stripe";
 import BigNumber from "bignumber.js";
 import { toLower } from "lodash";
-import { Order, userSelector, Voucher } from "../../util/global";
+import {
+  KGBRequest,
+  KGBResponse,
+  Order,
+  userSelector,
+  Voucher,
+} from "../../util/global";
 import IO from "../../socket/io";
 import { findX } from "../report/report.service";
 import PaymentSuccessEmail from "../../email/templates/order.paid";
 import { render } from "@react-email/render";
 import sendEmail from "../../email/process";
+import HttpException from "../../exceptions/http-exception";
 
 export const onStripeHook = async (event: any, io: IO) => {
   const STATUS_MAP = {
@@ -26,8 +33,6 @@ export const onStripeHook = async (event: any, io: IO) => {
     "checkout.session.expired": OrderStatus.EXPIRED,
     "invoice.paid": OrderStatus.SUCCESS,
   } as any;
-
-  // customer.subscription.deleted
 
   console.log("onStripeHook", event);
 
@@ -296,15 +301,6 @@ export const getPlatformFee = async (
   }
   return { price, originalFee };
 };
-// Example to use getPlatformFee
-// const platformFee = await getPlatformFee(BigNumber(totalAmount).div(100).toNumber())
-// const line_items = [
-//    {...other line items},
-//   {
-//     price: platformFee.id,
-//     quantity: 1,
-//   },
-// ]
 
 export const getPriceIdInProduct = async (
   productStripeId: string,
@@ -343,25 +339,25 @@ export const createLineItems = async (
       where: { code, campaign: { active: true } },
     });
   }
-  for (const courseId of courseIds) {
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-      include: { products: true },
-    });
-    if (!course) {
-      continue;
-    }
-    if (BigNumber(course.priceAmount).isEqualTo(0)) {
-      await prisma.coursesPaid.create({
-        data: {
-          course: { connect: { id: courseId } },
-          user: { connect: { id: userId } },
-          isFree: true,
-        },
-      });
-      courseIds.splice(courseIds.indexOf(courseId), 1);
-    }
-  }
+  // for (const courseId of courseIds) {
+  //   const course = await prisma.course.findUnique({
+  //     where: { id: courseId },
+  //     include: { products: true },
+  //   });
+  //   if (!course) {
+  //     continue;
+  //   }
+  //   if (BigNumber(course.priceAmount).isEqualTo(0)) {
+  //     await prisma.coursesPaid.create({
+  //       data: {
+  //         course: { connect: { id: courseId } },
+  //         user: { connect: { id: userId } },
+  //         isFree: true,
+  //       },
+  //     });
+  //     courseIds.splice(courseIds.indexOf(courseId), 1);
+  //   }
+  // }
   if (!courseIds.length) {
     return {
       line_items: [],
@@ -470,7 +466,7 @@ export const notPaidCourses = async (userId: string, courseIds: string[]) => {
       where: {
         courseId,
         userId,
-        OR: [{ isFree: true }, { order: { status: OrderStatus.SUCCESS } }],
+        order: { status: OrderStatus.SUCCESS },
       },
     });
     if (isBought) {
@@ -535,4 +531,153 @@ export const bindingPriceForProductOrder = async (id: string) => {
       },
     });
   }
+};
+
+export const estimate = async (
+  userId: string,
+  courseIds: string[],
+  tipPercent: number,
+  code?: string,
+) => {
+  let voucher: Voucher = null;
+  if (code) {
+    voucher = await prisma.voucher.findFirst({
+      where: {
+        code,
+        campaign: { active: true },
+        campaignUser: { userId: userId },
+      },
+    });
+  }
+
+  let totalAmount = BigNumber(0);
+  let originalAmount = BigNumber(0);
+  const feeDiscount = voucher
+    ? voucher.type === VoucherType.FEE_PERCENTAGE
+    : false;
+
+  for (const courseId of courseIds) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      include: { products: true },
+    });
+    if (!course) {
+      continue;
+    }
+    const campaignDiscount = await prisma.campaignDiscount.findFirst({
+      where: { courseId, campaign: { active: true } },
+      include: { campaign: true },
+      orderBy: { value: "desc" },
+    });
+
+    let isDiscountFromCampaign = false;
+    if (campaignDiscount) {
+      if (
+        await prisma.campaignUser.findFirst({
+          where: { campaignId: campaignDiscount.campaignId, userId },
+        })
+      ) {
+        isDiscountFromCampaign = true;
+      }
+    }
+
+    const product = course.products[0];
+    let latestPrice = BigNumber(course.priceAmount);
+    originalAmount = originalAmount.plus(latestPrice);
+
+    // Apply voucher discount if it's a product percentage discount
+    if (voucher && voucher.type === VoucherType.PRODUCT_PERCENTAGE) {
+      latestPrice = BigNumber(course.priceAmount)
+        .times(100 - voucher.value)
+        .dividedBy(100);
+    }
+
+    // Apply campaign discount if applicable
+    if (isDiscountFromCampaign) {
+      latestPrice = BigNumber(course.priceAmount)
+        .times(100 - campaignDiscount.value)
+        .dividedBy(100);
+    }
+
+    totalAmount = totalAmount.plus(latestPrice);
+  }
+
+  // Estimate the platform fee
+  const { price: platformFee } = await getPlatformFee(
+    BigNumber(totalAmount),
+    Currency.USD,
+    PaymentPlatform.STRIPE,
+    feeDiscount ? voucher.value : 0,
+  );
+
+  // Estimate the tip
+  const tip = await getPriceForTip(BigNumber(totalAmount), tipPercent);
+
+  return {
+    amount: totalAmount,
+    fee: BigNumber(platformFee.unit_amount_decimal).dividedBy(100),
+    tip: BigNumber(tip.unit_amount_decimal).dividedBy(100),
+  };
+};
+
+export const checkout = async (req: KGBRequest, res: KGBResponse) => {
+  const reqUser = req.user;
+  const code = req.gp<string>("code", null, String);
+  let { courseIds } = req.body;
+  if (courseIds instanceof String) {
+    courseIds = JSON.parse(courseIds as string);
+  }
+  courseIds = await notPaidCourses(reqUser.id, courseIds);
+  if (courseIds.length === 0) {
+    throw new HttpException(400, "Courses already paid");
+  }
+  const tipPercent = req.gp<number>("tipPercent", 0, Number);
+  const {
+    line_items,
+    platformFee,
+    tip,
+    totalAmount,
+    originalAmount,
+    originalFee,
+  } = await createLineItems(req.user.id, courseIds, tipPercent, code);
+  const success_url = req.gp<string>(
+    "successUrl",
+    process.env.PUBLIC_URL,
+    String,
+  );
+  const checkout = await stripe.checkout.sessions.create({
+    line_items,
+    mode: "payment",
+    success_url,
+  });
+  const order = await prisma.order.create({
+    data: {
+      platformFee: BigNumber(platformFee.unit_amount_decimal)
+        .div(100)
+        .toNumber(),
+      KGBHubServiceTip: tip
+        ? BigNumber(tip.unit_amount_decimal).div(100).toNumber()
+        : 0,
+      amount: BigNumber(totalAmount).toNumber(),
+      currency: Currency.USD,
+      status: OrderStatus.PENDING,
+      expiresAt: new Date(checkout.expires_at * 1000),
+      user: { connect: { id: reqUser.id } },
+      stripeCheckoutId: checkout.id,
+      checkoutUrl: checkout.url,
+      originalAmount: BigNumber(originalAmount).toNumber(),
+      originalFee: BigNumber(originalFee).toNumber(),
+    },
+  });
+  for (const _ of courseIds) {
+    await prisma.coursesPaid.create({
+      data: {
+        course: { connect: { id: _ } },
+        user: { connect: { id: reqUser.id } },
+        order: { connect: { id: order.id } },
+      },
+    });
+  }
+  res.status(200).data(order);
+  await bindingPriceForProductOrder(order.id);
 };

@@ -118,7 +118,7 @@ export type KGBRequest = Request & {
     defaultValue?: T,
     validate?: ((val: T) => T | undefined) | T[] | RegExp | object,
   ) => T | null;
-  genNextUrl: (data: any[]) => string;
+  genNextUrl: (data: any[], total?: number) => string;
 };
 
 export type fileModel = File;
@@ -189,7 +189,6 @@ export type User = {
   coverFile?: File;
   birthday?: Date;
   platform: Platform;
-  refreshToken?: string;
   firstTime: boolean;
   isNewUser: boolean;
   syncWithGoogle: boolean;
@@ -314,7 +313,6 @@ export type Course = {
   user: User;
   userId: string;
 
-  // lessons      Lesson[]
   hearts: Heart[];
   parts: Part[];
 
@@ -335,8 +333,6 @@ export type CoursesPaid = {
   courseId: string;
   user: User;
   userId: string;
-
-  isFree: boolean;
 
   order: Order;
   orderId: string;

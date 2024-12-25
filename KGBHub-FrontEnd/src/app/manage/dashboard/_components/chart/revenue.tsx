@@ -1,38 +1,38 @@
-'use client'
-import { format } from 'date-fns'
-import Chart from 'react-apexcharts'
+"use client";
+import { format } from "date-fns";
+import Chart from "react-apexcharts";
 
 type RevenueChartProps = {
-  data: any
-  groupBy?: string
-}
+  data: any;
+  groupBy?: string;
+};
 
-const RevenueChart = ({ data, groupBy = 'month' }: RevenueChartProps) => {
-  const months = Object.keys(data)
+const RevenueChart = ({ data, groupBy = "month" }: RevenueChartProps) => {
+  const months = Object.keys(data);
   const monthNames =
-    groupBy === 'month'
+    groupBy === "month"
       ? Object.keys(data).map((key) => {
-          const [year, month] = key.split('-')
-          return format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM')
+          const [year, month] = key.split("-");
+          return format(new Date(parseInt(year), parseInt(month) - 1), "MMMM");
         })
-      : undefined
+      : undefined;
   const totalOriginalAmounts = months.map(
     (month) => data[month].totalOriginalAmount
-  )
-  const totalAmounts = months.map((month) => data[month].totalAmount)
-  const totalFees = months.map((month) => data[month].totalFee)
-  const totalOrders = months.map((month) => data[month].totalOrder)
+  );
+  const totalAmounts = months.map((month) => data[month].totalAmount);
+  const totalFees = months.map((month) => data[month].totalFee);
+  const totalOrders = months.map((month) => data[month].totalOrder);
 
   const totalAmountCombined = totalOriginalAmounts.map((value, index) => [
     value,
     totalAmounts[index],
-  ])
+  ]);
 
   const chartOptions = {
     chart: {
-      type: 'bar',
+      type: "bar",
       stacked: true,
-      foreColor: 'hsl(var(--nextui-default-800))',
+      foreColor: "hsl(var(--nextui-default-800))",
       toolbar: {
         show: false,
       },
@@ -42,61 +42,65 @@ const RevenueChart = ({ data, groupBy = 'month' }: RevenueChartProps) => {
     },
     grid: {
       show: true,
-      borderColor: 'hsl(var(--nextui-default-200))',
+      borderColor: "hsl(var(--nextui-default-200))",
       strokeDashArray: 0,
-      position: 'back',
+      position: "back",
     },
     stroke: {
       width: [0, 0, 0, 3],
-      curve: 'smooth',
+      curve: "smooth",
     },
     plotOptions: {
       bar: {
-        columnWidth: '50%',
-        endingShape: 'flat',
+        columnWidth: "50%",
+        endingShape: "flat",
       },
     },
     xaxis: {
       categories:
-        groupBy === 'month' ? monthNames : Object.keys(data).map((key) => key),
+        groupBy === "month" ? monthNames : Object.keys(data).map((key) => key),
       labels: {
         show: true,
         style: {
-          colors: 'hsl(var(--nextui-default-800))',
+          colors: "hsl(var(--nextui-default-800))",
         },
       },
       axisBorder: {
-        color: 'hsl(var(--nextui-nextui-default-200))',
+        color: "hsl(var(--nextui-nextui-default-200))",
       },
       axisTicks: {
-        color: 'hsl(var(--nextui-nextui-default-200))',
+        color: "hsl(var(--nextui-nextui-default-200))",
       },
     },
     yaxis: [
       {
-        seriesName: ['Total Original Amount', 'Total Fee', 'Total Amount'],
+        seriesName: ["Total Original Amount", "Total Fee", "Total Amount"],
         title: {
-          text: 'Amounts (USD)',
+          text: "Amounts (USD)",
         },
         labels: {
+          formatter: function (value: number) {
+            return value.toFixed(0);
+          },
           style: {
             // hsl(var(--nextui-content1-foreground))
-            colors: 'hsl(var(--nextui-default-800))',
+            colors: "hsl(var(--nextui-default-800))",
           },
         },
       },
       {
         opposite: true,
-        seriesName: 'Total Orders',
+        seriesName: "Total Orders",
         title: {
-          text: 'Orders',
+          text: "Orders",
         },
-        min: 0,
-        max: 100,
         labels: {
+          formatter: function (value: number) {
+            return value.toFixed(0);
+          },
           style: {
             // hsl(var(--nextui-content1-foreground))
-            colors: 'hsl(var(--nextui-default-800))',
+            colors: "hsl(var(--nextui-default-800))",
           },
         },
       },
@@ -109,18 +113,18 @@ const RevenueChart = ({ data, groupBy = 'month' }: RevenueChartProps) => {
           // @ts-ignore
           { series, seriesIndex, dataPointIndex, w }
         ) {
-          const test = series[seriesIndex][dataPointIndex]
-          const seriesName = w.globals.seriesNames[seriesIndex]
-          if (seriesName === 'Total Original Amount') {
-            return totalOriginalAmounts[dataPointIndex]
+          const test = series[seriesIndex][dataPointIndex];
+          const seriesName = w.globals.seriesNames[seriesIndex];
+          if (seriesName === "Total Original Amount") {
+            return totalOriginalAmounts[dataPointIndex];
           }
-          return value
+          return value;
         },
       },
     },
 
     legend: {
-      position: 'bottom',
+      position: "bottom",
       onItemClick: {
         toggleDataSeries: false,
       },
@@ -128,35 +132,35 @@ const RevenueChart = ({ data, groupBy = 'month' }: RevenueChartProps) => {
         highlightDataSeries: false,
       },
     },
-  }
+  };
 
   const chartSeries = [
     {
-      name: 'Total Amount',
-      type: 'bar',
-      group: 'total-amount',
+      name: "Total Amount",
+      type: "bar",
+      group: "total-amount",
       data: totalAmounts,
     },
     {
-      name: 'Total Original Amount',
-      type: 'bar',
-      group: 'total-amount',
+      name: "Total Original Amount",
+      type: "bar",
+      group: "total-amount",
       data: totalOriginalAmounts.map((value, index) =>
         Math.abs(value - totalAmounts[index])
       ),
     },
 
     {
-      name: 'Total Fee',
-      type: 'bar',
+      name: "Total Fee",
+      type: "bar",
       data: totalFees,
     },
     {
-      name: 'Total Orders',
-      type: 'line',
+      name: "Total Orders",
+      type: "line",
       data: totalOrders,
     },
-  ]
+  ];
   return (
     <Chart
       // @ts-ignore
@@ -165,7 +169,7 @@ const RevenueChart = ({ data, groupBy = 'month' }: RevenueChartProps) => {
       type="line"
       height={400}
     />
-  )
-}
+  );
+};
 
-export default RevenueChart
+export default RevenueChart;

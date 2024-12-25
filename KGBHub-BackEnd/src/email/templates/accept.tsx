@@ -80,6 +80,5 @@ const AcceptForm = ({ userFirstName = "User" }) => (
 export default AcceptForm;
 
 const main = `bg-white font-['-apple-system,BlinkMacSystemFont,"Segoe_UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica_Neue",sans-serif'] text-black`;
-// const container = 'p-5 pb-12 w-[60%]';
 const container = "p-5 pb-12 px-15 max-w-screen-sm";
 const paragraph = "text-base leading-[26px] text-start";

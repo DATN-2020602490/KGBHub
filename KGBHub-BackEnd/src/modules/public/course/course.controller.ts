@@ -113,14 +113,7 @@ export default class PublicCourseController extends BaseController {
             where: {
               userId: req.user.id,
               courseId: course.id,
-              OR: [
-                {
-                  isFree: true,
-                },
-                {
-                  order: { status: OrderStatus.SUCCESS },
-                },
-              ],
+              order: { status: OrderStatus.SUCCESS },
             },
           }),
           this.prisma.lessonDone.findMany({
@@ -183,8 +176,7 @@ export default class PublicCourseController extends BaseController {
       throw new NotFoundException("course", id);
     }
     course["totalBought"] = course.coursesPaid.filter(
-      (cp) =>
-        (cp.order && cp.order.status === OrderStatus.SUCCESS) || cp.isFree,
+      (cp) => cp.order && cp.order.status === OrderStatus.SUCCESS,
     ).length;
 
     if (req.user) {
@@ -199,14 +191,7 @@ export default class PublicCourseController extends BaseController {
           where: {
             userId: req.user.id,
             courseId: course.id,
-            OR: [
-              {
-                isFree: true,
-              },
-              {
-                order: { status: OrderStatus.SUCCESS },
-              },
-            ],
+            order: { status: OrderStatus.SUCCESS },
           },
         }),
         this.prisma.lessonDone.findMany({

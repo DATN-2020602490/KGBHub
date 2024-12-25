@@ -322,7 +322,6 @@ export default class LessonController extends BaseController {
           part: { connect: { id: partId || lesson.partId } },
           trialAllowed: trialAllowed || lesson.trialAllowed,
           descriptionMD: descriptionMD || lesson.descriptionMD,
-          // status: LessonStatus.PENDING,
           title: title || lesson.title,
           content: content || lesson.content,
         },

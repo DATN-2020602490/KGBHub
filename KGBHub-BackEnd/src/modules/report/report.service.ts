@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import {
   CoursesPaid,
   GLOBAL_REVENUE_SHARE,
@@ -10,21 +11,37 @@ export const groupOrdersByDate = (
   groupBy: string,
   isSystem = true,
 ) => {
-  const result = orders.reduce((acc: ReportData, order) => {
+  const result = orders.reduce((acc, order) => {
     const dateKey = getDateKey(order.updatedAt, groupBy);
     if (!acc[dateKey]) {
-      acc[dateKey] = { totalOriginalAmount: 0, totalAmount: 0, totalOrder: 0 };
+      acc[dateKey] = {
+        totalOriginalAmount: BigNumber(0),
+        totalAmount: BigNumber(0),
+        totalOrder: BigNumber(0),
+      };
       if (isSystem) {
-        acc[dateKey]["totalFee"] = 0;
-        acc[dateKey]["totalTip"] = 0;
+        acc[dateKey]["totalFee"] = BigNumber(0);
+        acc[dateKey]["totalTip"] = BigNumber(0);
       }
     }
-    acc[dateKey].totalOrder += 1;
-    acc[dateKey].totalOriginalAmount += order.originalAmount;
-    acc[dateKey].totalAmount += order.amount;
+    acc[dateKey].totalOrder = BigNumber(acc[dateKey].totalOrder).plus(1);
+    acc[dateKey].totalOriginalAmount = BigNumber(
+      acc[dateKey].totalOriginalAmount,
+    ).plus(order.originalAmount);
+    acc[dateKey].totalAmount = BigNumber(acc[dateKey].totalAmount).plus(
+      order.amount,
+    );
     if (isSystem) {
-      acc[dateKey].totalFee += order.platformFee;
-      acc[dateKey].totalTip += order.KGBHubServiceTip;
+      acc[dateKey].totalFee = BigNumber(acc[dateKey].totalFee).plus(
+        order.platformFee,
+      );
+      acc[dateKey].totalTip = BigNumber(acc[dateKey].totalTip).plus(order.tip);
+    }
+    for (const key in acc[dateKey]) {
+      if (key === "totalOrder") {
+        acc[dateKey][key] = acc[dateKey][key].toNumber();
+      }
+      acc[dateKey][key] = BigNumber(acc[dateKey][key].toFixed(2)).toNumber();
     }
     return acc;
   }, {});
@@ -80,8 +97,9 @@ export const processOrdersReportAuthor = (
  * @returns The value of x.
  */
 export function findX(a: number, b: number, y: number) {
-  if (b === 0) {
-    throw new Error("Division by zero: b cannot be zero.");
+  try {
+    return isNaN((a * y) / b) ? 0 : (a * y) / b;
+  } catch {
+    return 0;
   }
-  return (a * y) / b;
 }

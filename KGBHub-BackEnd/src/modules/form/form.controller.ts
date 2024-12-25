@@ -43,7 +43,6 @@ export default class FormController extends BaseController {
     return res.status(200).data(form);
   };
   updateForm = async (req: KGBRequest, res: KGBResponse) => {
-    const reqUser = req.user;
     const id = req.gp<string>("id", undefined, String);
     const status = req.body.status as FormStatus;
     const form = await this.prisma.submitForm.update({

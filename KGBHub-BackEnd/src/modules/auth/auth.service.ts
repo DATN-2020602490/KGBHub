@@ -4,9 +4,11 @@ import prisma from "../../prisma";
 import { normalizeEmail } from "../../util";
 import { RoleEnum } from "@prisma/client";
 
-export const decodeJWT = async (token: string): Promise<User> => {
-  let { email } = (verify(token, process.env.SECRET as string) as JwtPayload)
-    .user as User;
+export const decodeJWT = async (
+  token: string,
+  secretOrKey = process.env.SECRET,
+): Promise<User> => {
+  let { email } = (verify(token, secretOrKey) as JwtPayload).user as User;
   if (!email) {
     throw new Error("Invalid token");
   }
@@ -15,6 +17,12 @@ export const decodeJWT = async (token: string): Promise<User> => {
     where: { email },
     include: { roles: { include: { role: true } } },
   })) as User;
+};
+export const decodeJWTRaw = (
+  token: string,
+  secretOrKey = process.env.SECRET,
+) => {
+  return verify(token, secretOrKey) as JwtPayload;
 };
 
 export const checkRole = (user: User, roles: RoleEnum[]) => {

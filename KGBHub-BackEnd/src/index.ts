@@ -5,9 +5,11 @@ import RefreshData from "./configs/cron/refresh.data";
 import { defaultImage, sleep } from "./util";
 import app from "./app";
 import "./bull";
+import redisClient from "./configs/redis";
 
 async function bootstrap() {
   try {
+    redisClient.connect();
     app.listen();
     defaultImage().catch(console.log);
     migrate.init();

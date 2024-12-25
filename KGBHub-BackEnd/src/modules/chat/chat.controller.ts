@@ -152,23 +152,6 @@ export default class ChatController extends BaseController {
       }
       await this.io.sendChatList(socket.user.id, conversation.id, socket);
     }
-    // const sockets: any[] = await this.io.io.of(this.io.chatNamespaceRouter).fetchSockets()
-    // for (const s of sockets) {
-    //   if (!s.user) {
-    //     continue
-    //   }
-    //   const isInRoom = await this.prisma.chatMember.findFirst({
-    //     where: {
-    //       userId: s.user.id,
-    //       conversationId: conversation.id,
-    //       status: MemberStatus.ACTIVE,
-    //     },
-    //   })
-    //   if (isInRoom) {
-    //     const chatList = await this.io.chatList(s.user.id)
-    //     s.emit('getChats', chatList)
-    //   }
-    // }
   };
 
   addMembers = async (req: KGBRequest, res: KGBResponse) => {
@@ -226,23 +209,6 @@ export default class ChatController extends BaseController {
       }
       await this.io.sendChatList(socket.user.id, conversation.id, socket);
     }
-    // const sockets: any[] = await this.io.io.of(this.io.chatNamespaceRouter).fetchSockets()
-    // for (const s of sockets) {
-    //   if (!s.user) {
-    //     continue
-    //   }
-    //   const isInRoom = await this.prisma.chatMember.findFirst({
-    //     where: {
-    //       userId: s.user.id,
-    //       conversationId: conversation.id,
-    //       status: MemberStatus.ACTIVE,
-    //     },
-    //   })
-    //   if (isInRoom) {
-    //     const chatList = await this.io.chatList(s.user.id)
-    //     s.emit('getChats', chatList)
-    //   }
-    // }
   };
   updateChat = async (req: KGBRequest, res: KGBResponse) => {
     const reqUser = req.user;
@@ -286,23 +252,6 @@ export default class ChatController extends BaseController {
       await this.io.sendChatList(socket.user.id, conversation.id, socket);
     }
     await updateSearchAccent("conversation", conversationId);
-    // const sockets: any[] = await this.io.io.of(this.io.chatNamespaceRouter).fetchSockets()
-    // for (const s of sockets) {
-    //   if (!s.user) {
-    //     continue
-    //   }
-    //   const isInRoom = await this.prisma.chatMember.findFirst({
-    //     where: {
-    //       userId: s.user.id,
-    //       conversationId: conversation.id,
-    //       status: MemberStatus.ACTIVE,
-    //     },
-    //   })
-    //   if (isInRoom) {
-    //     const chatList = await this.io.chatList(s.user.id)
-    //     s.emit('getChats', chatList)
-    //   }
-    // }
   };
   removeChat = async (req: KGBRequest, res: KGBResponse) => {
     const conversationId = req.gp<string>("conversationId", undefined, String);
@@ -353,23 +302,6 @@ export default class ChatController extends BaseController {
       }
       await this.io.sendChatList(socket.user.id, conversation.id, socket);
     }
-    // const sockets: any[] = await this.io.io.of(this.io.chatNamespaceRouter).fetchSockets()
-    // for (const s of sockets) {
-    //   if (!s.user) {
-    //     continue
-    //   }
-    //   const isInRoom = await this.prisma.chatMember.findFirst({
-    //     where: {
-    //       userId: s.user.id,
-    //       conversationId: conversation.id,
-    //       status: MemberStatus.ACTIVE,
-    //     },
-    //   })
-    //   if (isInRoom) {
-    //     const chatList = await this.io.chatList(s.user.id)
-    //     s.emit('getChats', chatList)
-    //   }
-    // }
   };
   leaveChat = async (req: KGBRequest, res: KGBResponse) => {
     const reqUser = req.user;
@@ -412,23 +344,6 @@ export default class ChatController extends BaseController {
       }
       await this.io.sendChatList(socket.user.id, conversation.id, socket);
     }
-    // const sockets: any[] = await this.io.io.of(this.io.chatNamespaceRouter).fetchSockets()
-    // for (const s of sockets) {
-    //   if (!s.user) {
-    //     continue
-    //   }
-    //   const isInRoom = await this.prisma.chatMember.findFirst({
-    //     where: {
-    //       userId: s.user.id,
-    //       conversationId: conversation.id,
-    //       status: MemberStatus.ACTIVE,
-    //     },
-    //   })
-    //   if (isInRoom) {
-    //     const chatList = await this.io.chatList(s.user.id)
-    //     s.emit('getChats', chatList)
-    //   }
-    // }
   };
   createChat = async (req: KGBRequest, res: KGBResponse) => {
     const reqUser = req.user;
@@ -595,16 +510,5 @@ export default class ChatController extends BaseController {
       _.push(__);
     }
     res.status(200).data(_);
-
-    // const { attachments: attachmentList } = req.files as {
-    //   attachments: Express.Multer.File[]
-    // }
-    // for (const _ of attachmentList) {
-    //   try {
-    //     unlinkSync(_.path)
-    //   } catch (e) {
-    //     console.log(e)
-    //   }
-    // }
   };
 }

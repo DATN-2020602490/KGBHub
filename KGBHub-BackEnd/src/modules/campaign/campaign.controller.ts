@@ -435,6 +435,7 @@ export default class CampaignController extends BaseController {
   getMyPromotion = async (req: KGBRequest, res: KGBResponse) => {
     const courseId = req.gp<string>("courseId", null, String);
     const user = req.user;
+    // const type = req.gp<string>("type", null, CampaignType);
 
     const campaignUsers = (await this.prisma.campaignUser.findMany({
       where: {
@@ -443,6 +444,7 @@ export default class CampaignController extends BaseController {
           startAt: { lte: new Date() },
           endAt: { gte: new Date() },
           active: true,
+          type: CampaignType.VOUCHERS,
         },
       },
       include: {

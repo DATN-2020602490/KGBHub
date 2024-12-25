@@ -9,6 +9,7 @@ export default function ButtonLogout() {
   const pathname = usePathname()
   const handleLogout = async () => {
     try {
+      router.push("/")
       await authApiRequest.logoutByNextServer()
       // router.push('/login')
     } catch (error) {
@@ -23,7 +24,6 @@ export default function ButtonLogout() {
       logout()
       // router.refresh()
       localStorage.removeItem('user')
-      router.push("/")
     }
   }
   return (

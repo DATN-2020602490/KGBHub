@@ -27,7 +27,6 @@ model User {
   coverFileId    String?
   birthday       DateTime?
   platform       Platform
-  refreshToken   String?
   firstTime      Boolean    @default(true) // false if sent first time public profile email
   isNewUser      Boolean    @default(true) // new user flag
   syncWithGoogle Boolean    @default(false)
@@ -221,8 +220,6 @@ model CoursesPaid {
   courseId String
   user     User   @relation(fields: [userId], references: [id])
   userId   String
-
-  isFree Boolean @default(false)
 
   order   Order?  @relation(fields: [orderId], references: [id])
   orderId String?

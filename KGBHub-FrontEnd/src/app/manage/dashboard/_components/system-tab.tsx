@@ -34,7 +34,7 @@ export default function SystemTab() {
       </div>
       <div className="grid grid-cols-3 gap-4 px-44 relative">
         <Select
-          defaultSelectedKeys={['month']}
+          selectedKeys={[groupBy]}
           value={groupBy}
           onChange={(e) => setGroupBy(e.target.value)}
           className="max-w-xs"
@@ -42,6 +42,8 @@ export default function SystemTab() {
           label="Group by"
           placeholder="Group by"
           labelPlacement="outside"
+          selectionMode="single"
+          disallowEmptySelection
         >
           <SelectItem key="month" value="month">
             Month

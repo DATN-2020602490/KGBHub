@@ -22,6 +22,7 @@ import ReportMockController from "../modules/report/report-mock.controller";
 import StripeController from "../modules/stripe/stripe.controller";
 import TestController from "../modules/test/test.controller";
 import UserController from "../modules/user/user.controller";
+import ReportController from "../modules/report/report.controller";
 
 class App {
   public app: express.Application;

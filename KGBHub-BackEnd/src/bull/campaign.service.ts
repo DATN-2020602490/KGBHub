@@ -58,7 +58,7 @@ export const scheduleCampaign = async (data: { id: string }) => {
   } else {
     scheduleJob(
       QUEUE_NAMES.sendEmailCampaign,
-      new Date(Date.now() + 60 * 1000),
+      new Date(Date.now() + 3 * 60 * 1000),
       data,
     );
   }

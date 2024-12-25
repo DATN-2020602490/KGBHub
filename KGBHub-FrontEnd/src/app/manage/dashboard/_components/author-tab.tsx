@@ -61,25 +61,25 @@ export default function AuthorTab() {
         {authData && (
           <div className="mt-5 flex w-full flex-col gap-2">
             {user &&
-              authData?.payload?.map((user) => (
+              authData?.payload?.map((auth) => (
                 <div
-                  key={user.id}
+                  key={auth.id}
                   className="flex cursor-pointer items-center gap-3 rounded-md border border-controls-border-border-base px-3.5 py-2 hover:bg-background-background-mid"
                   onClick={() => {
-                    setSelectedAuthor(user)
+                    setSelectedAuthor(auth)
                     setSearch('')
                   }}
                 >
                   <Avatar
-                    src={generateMediaLink(user.avatarFileId)}
+                    src={generateMediaLink(auth.avatarFileId)}
                     className="h-9 w-9 shrink-0 border-none lg:h-11 lg:w-11"
                   ></Avatar>
                   <div className="w-full">
                     <div className="text-sm lg:text-base">{`${
-                      user.firstName || ''
-                    } ${user.lastName || ''}`}</div>
+                      auth.firstName || ''
+                    } ${auth.lastName || ''}`}</div>
                     <div className="h-3 text-xs font-medium leading-3 lg:h-5 lg:text-xs lg:leading-5">
-                      {user.username || ''}
+                      {auth.username || ''}
                     </div>
                   </div>
                 </div>
@@ -88,7 +88,7 @@ export default function AuthorTab() {
         )}
 
         {selectedAuthor ? (
-          <div className="w-[320px] items-center relative flex justify-between bg-default-100 rounded-md p-6 mx-auto mb-6">
+          <div className="w-[420px] items-center relative flex justify-between bg-default-100 rounded-md p-6 mx-auto mb-6">
             <span
               className="absolute top-1.5 right-1.5 cursor-pointer"
               onClick={() => setSelectedAuthor(undefined)}
@@ -119,12 +119,20 @@ export default function AuthorTab() {
               />
               <div className="flex flex-col gap-1 items-start justify-center">
                 <h4 className="text-small font-semibold leading-none text-default-600">
-                  {displayFullname(user?.firstName, user?.lastName)}
+                  {displayFullname(
+                    selectedAuthor?.firstName,
+                    selectedAuthor?.lastName
+                  )}
                 </h4>
-                <h5 className="text-small tracking-tight text-default-400">
+                <h5 className="text-small tracking-tight text-default-400 line-clamp-1">
                   @
-                  {user?.username ??
-                    slugify(displayFullname(user?.firstName, user?.lastName))}
+                  {selectedAuthor?.username ??
+                    slugify(
+                      displayFullname(
+                        selectedAuthor?.firstName,
+                        selectedAuthor?.lastName
+                      )
+                    )}
                 </h5>
               </div>
             </div>
@@ -161,14 +169,16 @@ export default function AuthorTab() {
               </div>
               <div className="grid grid-cols-3 gap-4 px-44 relative">
                 <Select
-                  defaultSelectedKeys={['month']}
-                  value={groupBy}
+                  selectedKeys={[groupBy]}
+                  value={[groupBy]}
                   onChange={(e) => setGroupBy(e.target.value)}
                   className="max-w-xs"
                   radius="sm"
                   label="Group by"
                   placeholder="Group by"
                   labelPlacement="outside"
+                  selectionMode="single"
+                  disallowEmptySelection
                 >
                   <SelectItem key="month" value="month">
                     Month

@@ -49,7 +49,6 @@ export default class FileController extends BaseController {
     let filename = file.filename;
     const isExist = existsSync(`uploads/${filename}`);
     if (!isExist) {
-      // throw new NotFoundException("file", filename);
       filename = "0.jpg";
     }
     const fileType = ["jpeg", "jpg", "png", "gif", "svg"].includes(
@@ -116,25 +115,6 @@ export default class FileController extends BaseController {
           throw new HttpException(403, "Forbidden");
         }
       }
-
-      // if (
-      //   attachment &&
-      //   (!attachment.message ||
-      //     !(await this.prisma.chatMember.findFirst({
-      //       where: {
-      //         conversationId: attachment.conversationId,
-      //         userId: reqUser.id,
-      //       },
-      //     })))
-      // ) {
-      //   if (
-      //     !reqUser.roles.some((role) => role.role.name === RoleEnum.ADMIN) ||
-      //     reqUser.id !== attachment.userId
-      //   ) {
-      //     throw new HttpException(403, "Forbidden");
-      //   }
-      // }
-
       const videoPath = path.resolve(file.localPath as string);
       const stat = statSync(videoPath);
       const fileSize = stat.size;

@@ -14,6 +14,7 @@ import { downloadImage } from "./multer";
 import { getUniqueSuffix, normalizeEmail } from "../util";
 import { updateSearchAccent } from "../prisma/prisma.service";
 import { handleCloudSaveConversation } from "../modules/chat/chat.service";
+import { KGBRequest } from "../util/global";
 
 const User = prisma.user;
 
@@ -131,9 +132,17 @@ const jwtStrategy = new JwtStrategy(
   {
     secretOrKey: process.env.SECRET,
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    passReqToCallback: true,
   },
-  (payload, done: VerifyCallback) => {
-    // return done(null, payload.user)
+  (req: KGBRequest, payload: any, done: VerifyCallback) => {
+    // const token = req.headers.authorization?.split(" ")[1];
+    // if (token) {
+    //   redisClient.get(`revokedToken:${token}`).then((isRevoked) => {
+    //     if (isRevoked) {
+    //       return done(null, null);
+    //     }
+    //   });
+    // }
     const reqUser = payload.user as { email: string };
     if (reqUser) {
       prisma.user

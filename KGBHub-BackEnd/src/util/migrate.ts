@@ -22,6 +22,8 @@ import { refreshCourse } from "../modules/course/course.service";
 import { updateSearchAccent } from "../prisma/prisma.service";
 import { handleCloudSaveConversation } from "../modules/chat/chat.service";
 import { censorProfane } from ".";
+import { cloneDeep } from "lodash";
+import { Course } from "./global";
 
 type MigrateFunction = () => void;
 
@@ -271,7 +273,7 @@ migrate.add("re_stripe", async () => {
   for (const course of courses) {
     const product = await stripe.products.create({
       name: course.courseName,
-      description: course.courseName,
+      description: convert(course.descriptionMD),
       metadata: {
         userId: course.userId,
       },
@@ -578,6 +580,64 @@ migrate.add("update_campaign_active", async () => {
         data: { active: false },
       });
     }
+  }
+});
+
+migrate.add("mock_data_course", async () => {
+  let courseKotlin = (await prisma.course.findFirst({
+    where: { courseName: "Lập trình Kotlin toàn tập" },
+    include: { parts: { include: { lessons: true } } },
+  })) as Course;
+  courseKotlin = cloneDeep(courseKotlin) as Course;
+  const parts = cloneDeep(courseKotlin.parts);
+  delete courseKotlin.id;
+  delete courseKotlin.parts;
+  for (let i = 0; i < 100; i++) {
+    const data: any = {
+      ...courseKotlin,
+      courseName: `MOCK: ${courseKotlin.courseName} ${i + 1}`,
+    };
+    const course = await prisma.course.create({
+      data,
+    });
+    for (const part of parts) {
+      const partD = cloneDeep(part);
+      const lessons = cloneDeep(partD.lessons);
+      delete partD.lessons;
+      delete partD.id;
+      const partData: any = {
+        ...partD,
+        courseId: course.id,
+      };
+      const partX = await prisma.part.create({
+        data: partData,
+      });
+      for (const lesson of lessons) {
+        delete lesson.id;
+        const lessonData: any = {
+          ...lesson,
+          partId: partX.id,
+        };
+        await prisma.lesson.create({
+          data: lessonData,
+        });
+      }
+    }
+    await updateSearchAccent("course", course.id);
+  }
+});
+
+migrate.add("remove_free_data", async () => {
+  const coursesPaids = await prisma.coursesPaid.findMany({
+    include: { order: true },
+  });
+  for (const cp of coursesPaids) {
+    if (cp.order) {
+      continue;
+    }
+    await prisma.coursesPaid.delete({
+      where: { id: cp.id },
+    });
   }
 });
 

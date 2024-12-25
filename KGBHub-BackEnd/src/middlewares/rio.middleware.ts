@@ -20,7 +20,7 @@ export default (req: KGBRequest, res: KGBResponse, next: NextFunction) => {
     req.params.email = normalizeEmail(req.params.email as string);
   }
 
-  req.genNextUrl = (data: any[]) => {
+  req.genNextUrl = (data: any[], total?: number) => {
     if (!isArray(data)) {
       return "";
     }
@@ -28,7 +28,7 @@ export default (req: KGBRequest, res: KGBResponse, next: NextFunction) => {
     const offset = req.gp<number>("offset", offsetDefault, Number) + limit;
     const query = { ...req.query };
 
-    if (data.length < limit) {
+    if (data.length < limit || total === limit * (offset / limit + 1)) {
       return "";
     }
 
@@ -44,10 +44,6 @@ export default (req: KGBRequest, res: KGBResponse, next: NextFunction) => {
     total?: number,
     option?: any,
   ): ResponseData => {
-    if (option) {
-      console.log("ROUTER: ", req.originalUrl);
-      console.log(option);
-    }
     if (isArray(data) && total) {
       const limit = req.gp<number>("limit", limitDefault, Number);
       const offset = req.gp<number>("offset", offsetDefault, Number);
@@ -58,7 +54,7 @@ export default (req: KGBRequest, res: KGBResponse, next: NextFunction) => {
           page: offset / limit + 1,
           totalPages: Math.ceil(total / limit),
           total,
-          next: req.genNextUrl(data),
+          next: req.genNextUrl(data, total),
         },
       };
     }

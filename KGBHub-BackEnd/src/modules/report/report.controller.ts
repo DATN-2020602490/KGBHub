@@ -64,7 +64,6 @@ export default class ReportController extends BaseController {
     const authorId = req.gp<string>("authorId", req.user.id, String);
     const _ = (await this.prisma.coursesPaid.findMany({
       where: {
-        isFree: false,
         course: { userId: authorId },
         order: {
           status: OrderStatus.SUCCESS,

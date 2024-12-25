@@ -1,4 +1,4 @@
-import { htmlToText } from "html-to-text";
+import { convert } from "html-to-text";
 import prisma from ".";
 import { cloneDeep, isArray, isDate, isObjectLike } from "lodash";
 
@@ -125,7 +125,7 @@ export const updateSearchAccent = async (model: string, id: string) => {
 };
 
 export const removeAccent = (text) => {
-  return htmlToText(
+  return convert(
     text
       .normalize("NFD")
       .replace(/[\u0300\u0301\u0303\u0309\u0323]/g, "")

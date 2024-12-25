@@ -46,12 +46,7 @@ export default class PublicLessonController extends BaseController {
       where: {
         courseId: lesson.part.courseId,
         userId: reqUser.id,
-        OR: [
-          {
-            isFree: true,
-          },
-          { order: { status: OrderStatus.SUCCESS } },
-        ],
+        order: { status: OrderStatus.SUCCESS },
       },
     });
     if (!paid) {

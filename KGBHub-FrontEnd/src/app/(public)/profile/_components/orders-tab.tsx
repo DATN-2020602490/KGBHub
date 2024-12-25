@@ -6,6 +6,7 @@ import Empty from "@/components/common/empty";
 import { userApiRequest } from "@/services/user.service";
 import { X } from "lucide-react";
 import Link from "next/link";
+import { ProductType } from "@/constants";
 
 const OrderDetailPopup = ({
   order,
@@ -65,9 +66,18 @@ const OrderDetailPopup = ({
     );
   }
 
+  const savings = {
+    amount: orderDetails.originalAmount - orderDetails.amount,
+    fee: orderDetails.originalFee - orderDetails.platformFee
+  };
+
+  const hasAmountDifference = orderDetails.originalAmount > orderDetails.amount;
+  const hasFeeDifference = orderDetails.originalFee > orderDetails.platformFee;
+  const hasSavings = savings.amount > 0 || savings.fee > 0;
+
   return (
     <div className="fixed inset-0 bg-card/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className=" bg-card text-card-foreground p-6 rounded-lg w-[500px] max-h-[80vh] overflow-y-auto">
+      <div className="bg-card text-card-foreground p-6 rounded-lg w-[700px] max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Order Details</h2>
           <button
@@ -104,12 +114,6 @@ const OrderDetailPopup = ({
             <span>Date:</span>
             <span>{new Date(orderDetails.createdAt).toLocaleString()}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Total Amount:</span>
-            <span className="font-bold">
-              {orderDetails.amount.toLocaleString()} {orderDetails.currency}
-            </span>
-          </div>
 
           <div className="mt-4">
             <h3 className="font-semibold mb-2">Products</h3>
@@ -120,22 +124,61 @@ const OrderDetailPopup = ({
               >
                 <span className="flex-grow pr-4 break-words">
                   {productOrder.product.courseId ? (
-                    <Link
-                      target="_blank"
-                      href={`/course/${productOrder.product.courseId}`}
-                    >
-                      {productOrder.product.name}
-                    </Link>
+                    <>
+                      <Link
+                        target="_blank"
+                        href={`/course/${productOrder.product.courseId}`}
+                      >
+                        {productOrder.product.name}
+                      </Link>
+                    </>
                   ) : (
                     productOrder.product.name
                   )}
                 </span>
-                <span className="text-right whitespace-nowrap">
-                  {productOrder.quantity} x{" "}
-                  {productOrder.price.toLocaleString()} {orderDetails.currency}
-                </span>
+                <div className="text-right flex flex-col whitespace-nowrap">
+                  {productOrder.product.type !== ProductType.KGBHUB_SERVICE_TIP && (
+                    productOrder.product.courseId ? (
+                      <span className="line-through text-gray-500">
+                        {productOrder.product.price.toLocaleString()} {orderDetails.currency}
+                      </span>
+                    ):(
+                      (order as any).originalFee > order.platformFee ? (
+                        <span className="line-through text-gray-500">
+                          {(order as any).originalFee.toLocaleString()} {orderDetails.currency}
+                        </span>
+                      ): <></>
+                    )
+                  )}
+                  <span className="font-semibold">
+                    {productOrder.price.toLocaleString()} {orderDetails.currency}
+                  </span>
+                </div>
               </div>
             ))}
+          </div>
+          
+          <div className="pt-2 border-t space-y-2">
+            <div className="flex justify-between">
+              <span>Original Amount:</span>
+              <div className="text-right">
+                <span className="line-through text-gray-500">
+                  {(orderDetails.originalAmount + orderDetails.originalFee).toLocaleString()} {orderDetails.currency}
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-between text-green-600">
+              <span>Total Savings:</span>
+              <span>
+                {(savings.amount + savings.fee).toLocaleString()} {orderDetails.currency}
+              </span>
+            </div>
+            <div className="flex justify-between font-bold pt-2">
+              <span>Final Amount:</span>
+              <span>
+                {(orderDetails.amount + orderDetails.platformFee).toLocaleString()} {orderDetails.currency}
+              </span>
+            </div>
           </div>
         </div>
       </div>

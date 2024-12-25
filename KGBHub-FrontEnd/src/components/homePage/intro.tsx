@@ -11,7 +11,7 @@ import { useWindowSize } from 'usehooks-ts'
 const Intro = () => {
   const { width } = useWindowSize()
   return (
-    <div className="max-sm:flex-col flex justify-between w-full">
+    <div className="max-sm:flex-col flex justify-between w-full items-center">
       <div className="flex flex-col sm:w-1/3 gap-y-8 max-sm:text-center">
         <h3 className="font-bold text-4xl leading-10">
           Learn a New Skill Everyday, Anytime, and Anywhere.
@@ -129,23 +129,25 @@ const TypeWriter = ({ text, className }: { text: any; className: any }) => {
   return <span className={className}>{displayedText}</span>
 }
 
-const getDynamicFontSize = (quoteLength: any) => {
+const getDynamicFontSize = (quoteLength: number) => {
   if (quoteLength <= 50) {
-    return 'text-4xl md:text-5xl lg:text-6xl'
-  } else if (quoteLength <= 100) {
-    return 'text-3xl md:text-4xl lg:text-5xl'
-  } else if (quoteLength <= 150) {
     return 'text-2xl md:text-3xl lg:text-4xl'
-  } else {
+  } else if (quoteLength <= 100) {
     return 'text-xl md:text-2xl lg:text-3xl'
+  } else if (quoteLength <= 150) {
+    return 'text-lg md:text-xl lg:text-2xl'
+  } else if (quoteLength <= 200) {
+    return 'text-base md:text-lg lg:text-xl'
+  } else {
+    return 'text-sm md:text-base lg:text-lg'
   }
 }
 
 const PosterWithAnimation = () => {
   const [quoteData, setQuoteData] = useState({
     quote:
-      'Two roads diverged in a wood, and I—I took the one less traveled by, And that has made all the difference.',
-    author: 'Robert Frost',
+      'KGB Hub',
+    author: 'KGB Record',
   })
   const [alignment, setAlignment] = useState('text-left')
   const [fontSize, setFontSize] = useState('text-4xl')
@@ -184,13 +186,13 @@ const PosterWithAnimation = () => {
             height={920}
             className="max-md:w-96 md:w-full object-cover select-none rounded-2xl"
           />
-          <div className="absolute inset-0 bg-card/50 flex flex-col justify-center p-8 rounded-2xl">
+          <div className="absolute inset-0 bg-black/10 flex flex-col justify-center p-8 rounded-2xl">
             <div
               className={`h-[40%] flex flex-col justify-center ${alignment} font-serif`}
             >
               <div className="max-w-[90%] mx-auto">
                 <p
-                  className={`text-white ${fontSize} md:text-4xl lg:text-5xl mb-6 leading-relaxed uppercase`}
+                  className={`text-white ${fontSize} mb-6 leading-relaxed uppercase`}
                 >
                   <TypeWriter
                     text={quoteData.quote}

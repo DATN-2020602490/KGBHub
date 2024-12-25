@@ -14,6 +14,8 @@ import { downloadImage } from "../../configs/multer";
 import { getUniqueSuffix, normalizeEmail } from "../../util";
 import { updateSearchAccent } from "../../prisma/prisma.service";
 import { handleCloudSaveConversation } from "../chat/chat.service";
+import { decodeJWT, decodeJWTRaw } from "./auth.service";
+import redisClient from "../../configs/redis";
 
 export default class AuthController extends BaseController {
   public path = "/api/v1/auth";
@@ -156,10 +158,6 @@ export default class AuthController extends BaseController {
         }
       }
     }
-
-    delete user.platform;
-    delete user.refreshToken;
-
     return user;
   };
 
@@ -187,14 +185,13 @@ export default class AuthController extends BaseController {
   redirect = async (req: KGBRequest, res: KGBResponse) => {
     const accessToken = this.generateAccessToken(req.user);
     const refreshToken = this.generateRefreshToken(req.user);
-    await this.prisma.user.update({
-      where: {
-        email: req.user.email,
-      },
-      data: {
-        refreshToken,
-      },
-    });
+    const decode = decodeJWTRaw(refreshToken, process.env.REFRESH_SECRET);
+    const user = await decodeJWT(accessToken);
+    await redisClient.setEx(
+      `${normalizeEmail(user.email)}`,
+      decode.exp,
+      refreshToken,
+    );
     if (accessToken.includes("ERROR")) {
       return res
         .status(403)
@@ -244,15 +241,12 @@ export default class AuthController extends BaseController {
       const refreshToken = this.generateRefreshToken({
         email: data.email,
       });
-
-      await this.prisma.user.update({
-        where: {
-          email: data.email,
-        },
-        data: {
-          refreshToken,
-        },
-      });
+      const decode = decodeJWTRaw(refreshToken, process.env.REFRESH_SECRET);
+      await redisClient.setEx(
+        `${normalizeEmail(data.email)}`,
+        decode.exp,
+        refreshToken,
+      );
       if (accessToken.includes("ERROR")) {
         return res
           .status(403)
@@ -268,14 +262,13 @@ export default class AuthController extends BaseController {
 
   refresh = async (req: KGBRequest, res: KGBResponse) => {
     const refreshToken = req.body.refreshToken;
-    const payload = verify(
-      refreshToken,
-      process.env.REFRESH_SECRET || "",
-    ) as JwtPayload;
-
+    const payload = decodeJWTRaw(refreshToken, process.env.REFRESH_SECRET);
     if (
       !payload ||
-      !(await this.prisma.user.findFirst({ where: { refreshToken } }))
+      !(
+        (await redisClient.get(`${normalizeEmail(payload.user.email)}`)) ===
+        refreshToken
+      )
     ) {
       throw new HttpException(401, "Invalid refreshToken");
     }
@@ -291,15 +284,12 @@ export default class AuthController extends BaseController {
     const accessToken = this.generateAccessToken({
       email: user.email,
     });
-
-    await this.prisma.user.update({
-      where: {
-        email: reqUser.email,
-      },
-      data: {
-        refreshToken: newRefreshToken,
-      },
-    });
+    const decode = decodeJWTRaw(newRefreshToken, process.env.REFRESH_SECRET);
+    await redisClient.setEx(
+      `${normalizeEmail(user.email)}`,
+      decode.exp,
+      newRefreshToken,
+    );
     if (accessToken.includes("ERROR")) {
       return res
         .status(403)
@@ -309,15 +299,12 @@ export default class AuthController extends BaseController {
   };
 
   logout = async (req: KGBRequest, res: KGBResponse) => {
-    await this.prisma.user.update({
-      where: {
-        email: req.user.email,
-      },
-      data: {
-        refreshToken: null,
-      },
-    });
-
+    await redisClient.del(`${normalizeEmail(req.user.email)}`);
+    // const token = req.headers["authorization"]?.split(" ")[1];
+    // const raw = decodeJWTRaw(token);
+    // const expireAt = raw.exp;
+    // const tokenKey = `revokedToken:${token}`;
+    // await redisClient.setEx(tokenKey, expireAt, token);
     res.status(200).data({ message: "Logged out" });
   };
 }
