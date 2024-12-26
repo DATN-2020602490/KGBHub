@@ -95,7 +95,6 @@ export default class StripeController extends BaseController {
         productOrders: { include: { product: true } },
       },
     });
-    order.amount = order.amount + order.platformFee + order.KGBHubServiceTip;
 
     const tipProduct = order.productOrders.find(
       (po) => po.product.type === ProductType.KGBHUB_SERVICE_TIP,

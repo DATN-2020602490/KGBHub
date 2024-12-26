@@ -5,7 +5,7 @@ const redisClient = createClient({
   url: `redis://${REDIS_HOST}:${REDIS_PORT}`,
 });
 redisClient.on("connect", () => {
-  console.log("Connected to Redis");
+  "connect";
 });
 redisClient.on("error", (err) => {
   console.error("Redis error:", err);

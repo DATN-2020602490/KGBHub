@@ -63,15 +63,21 @@ export default class ReportMockController extends BaseController {
 
     const dates = this.generateDates(startDate, endDate, groupBy);
     const mockData = dates.reduce((acc, date) => {
-      const totalOriginalAmount = this.randomNumber(1000, 10000);
+      const totalOriginalAmount = this.randomNumber(50000, 100000);
       acc[date] = {
         totalOriginalAmount,
-        totalAmount: this.randomNumber(1000, totalOriginalAmount),
-        totalOrder: this.randomNumber(5, 500, true),
+        totalAmount: this.randomNumber(
+          totalOriginalAmount * (2 / 3),
+          totalOriginalAmount,
+        ),
+        totalOrder: this.randomNumber(500, 1000, true),
         totalFee: BigNumber(
           BigNumber(totalOriginalAmount * 0.05).toFixed(2),
         ).toNumber(),
-        totalTip: this.randomNumber(10, 1000),
+        totalTip: this.randomNumber(
+          totalOriginalAmount * (2 / 3) * 0.15,
+          totalOriginalAmount * 0.15,
+        ),
       };
       return acc;
     }, {} as Record<string, any>);
@@ -101,7 +107,10 @@ export default class ReportMockController extends BaseController {
       const totalOriginalAmount = this.randomNumber(500, 3000);
       acc[period] = {
         totalOriginalAmount,
-        totalAmount: this.randomNumber(500, totalOriginalAmount),
+        totalAmount: this.randomNumber(
+          totalOriginalAmount * (2 / 3),
+          totalOriginalAmount,
+        ),
         totalOrder: this.randomNumber(5, 50, true),
       };
       return acc;

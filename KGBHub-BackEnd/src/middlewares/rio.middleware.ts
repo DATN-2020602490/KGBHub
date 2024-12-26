@@ -51,7 +51,7 @@ export default (req: KGBRequest, res: KGBResponse, next: NextFunction) => {
         data,
         option,
         pagination: {
-          page: offset / limit + 1,
+          page: Math.floor(offset / limit) + 1,
           totalPages: Math.ceil(total / limit),
           total,
           next: req.genNextUrl(data, total),

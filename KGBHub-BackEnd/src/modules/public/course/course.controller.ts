@@ -145,6 +145,10 @@ export default class PublicCourseController extends BaseController {
         course["myRating"] = rating;
       }
     }
+    // const result =
+    //   (offset / limit + 1) * limit >= total
+    //     ? courses.slice(offset, total)
+    //     : courses.slice(offset, offset + limit);
     return res
       .status(200)
       .data(isBestSeller ? bestSellerCourses : courses, total);

@@ -160,13 +160,11 @@ export const updateOrderStatus = async (io: IO) => {
   for (const order of orders) {
     let status: OrderStatus;
 
-    if (order.expiresAt < new Date()) {
-      status = OrderStatus.EXPIRED;
-    } else {
-      const session = await stripe.checkout.sessions.retrieve(
-        order.stripeCheckoutId as string,
-      );
+    const session = await stripe.checkout.sessions.retrieve(
+      order.stripeCheckoutId as string,
+    );
 
+    if (session.status === "complete") {
       if (session.payment_status === "paid") {
         status = OrderStatus.SUCCESS;
       }
@@ -174,6 +172,10 @@ export const updateOrderStatus = async (io: IO) => {
       if (session.payment_status === "unpaid") {
         status = OrderStatus.FAILED;
       }
+    } else if (session.status === "expired") {
+      status = OrderStatus.EXPIRED;
+    } else if (session.status === "open") {
+      continue;
     }
 
     await prisma.order.update({
@@ -252,7 +254,7 @@ export const getPlatformFee = async (
   platform = PaymentPlatform.STRIPE,
   percent = 0,
 ) => {
-  const originalFee = amount.times(0.05);
+  const originalFee = amount.times(5).dividedBy(100);
   const fee = amount
     .times(0.05)
     .times(100 - percent)
@@ -640,6 +642,7 @@ export const checkout = async (req: KGBRequest, res: KGBResponse) => {
     originalAmount,
     originalFee,
   } = await createLineItems(req.user.id, courseIds, tipPercent, code);
+
   const success_url = req.gp<string>(
     "successUrl",
     process.env.PUBLIC_URL,
@@ -649,6 +652,7 @@ export const checkout = async (req: KGBRequest, res: KGBResponse) => {
     line_items,
     mode: "payment",
     success_url,
+    expires_at: Math.floor(Date.now() / 1000) + 35 * 60,
   });
   const order = await prisma.order.create({
     data: {

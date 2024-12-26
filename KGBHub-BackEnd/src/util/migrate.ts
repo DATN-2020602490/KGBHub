@@ -18,7 +18,7 @@ import {
   getPlatformFee,
 } from "../modules/stripe/stripe.service";
 import BigNumber from "bignumber.js";
-import { refreshCourse } from "../modules/course/course.service";
+import { deleteCourse, refreshCourse } from "../modules/course/course.service";
 import { updateSearchAccent } from "../prisma/prisma.service";
 import { handleCloudSaveConversation } from "../modules/chat/chat.service";
 import { censorProfane } from ".";
@@ -586,13 +586,15 @@ migrate.add("update_campaign_active", async () => {
 migrate.add("mock_data_course", async () => {
   let courseKotlin = (await prisma.course.findFirst({
     where: { courseName: "Lập trình Kotlin toàn tập" },
-    include: { parts: { include: { lessons: true } } },
+    include: { parts: { include: { lessons: true } }, products: true },
   })) as Course;
   courseKotlin = cloneDeep(courseKotlin) as Course;
   const parts = cloneDeep(courseKotlin.parts);
   delete courseKotlin.id;
   delete courseKotlin.parts;
-  for (let i = 0; i < 100; i++) {
+  const products = cloneDeep(courseKotlin.products);
+  delete courseKotlin.products;
+  for (let i = 0; i < 12; i++) {
     const data: any = {
       ...courseKotlin,
       courseName: `MOCK: ${courseKotlin.courseName} ${i + 1}`,
@@ -600,6 +602,27 @@ migrate.add("mock_data_course", async () => {
     const course = await prisma.course.create({
       data,
     });
+    for (const product of products) {
+      const productD = cloneDeep(product);
+      delete productD.id;
+      const p = await stripe.products.create({
+        name: course.courseName,
+        description: convert(course.descriptionMD),
+        active: true,
+        default_price_data: {
+          currency: Currency.USD,
+          unit_amount_decimal: String(0 * 100),
+        },
+      });
+      const productData: any = {
+        ...productD,
+        courseId: course.id,
+        productStripeId: p.id,
+      };
+      await prisma.product.create({
+        data: productData,
+      });
+    }
     for (const part of parts) {
       const partD = cloneDeep(part);
       const lessons = cloneDeep(partD.lessons);
@@ -637,6 +660,33 @@ migrate.add("remove_free_data", async () => {
     }
     await prisma.coursesPaid.delete({
       where: { id: cp.id },
+    });
+  }
+});
+
+migrate.add("remove_mock_data_c", async () => {
+  const courses = await prisma.course.findMany({
+    where: {
+      courseName: {
+        contains: "MOCK:",
+      },
+    },
+  });
+  for (const c of courses) {
+    await deleteCourse(c.id);
+  }
+});
+
+migrate.add("add_random_createdAt", async () => {
+  const courses = await prisma.course.findMany({});
+  for (const course of courses) {
+    const updatedAt = course.updatedAt;
+    const createdAt = new Date(
+      updatedAt.getTime() - Math.floor(Math.random() * 1000000),
+    );
+    await prisma.course.update({
+      where: { id: course.id },
+      data: { createdAt },
     });
   }
 });
