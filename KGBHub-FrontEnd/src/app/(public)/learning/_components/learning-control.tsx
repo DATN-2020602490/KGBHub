@@ -23,7 +23,7 @@ const LearningControl = ({ data }: Props) => {
   // const [canNext, setCanNext] = React.useState(false)
   // const indexLesson = lessonId
   //   ? data.lessons.findIndex(
-  //       (item: any) => item.lesson.id === parseInt(lessonId)
+  //       (item: any) => item.lesson.id === (lessonId)
   //     )
   //   : -1
   // useEffect(() => {
@@ -37,7 +37,7 @@ const LearningControl = ({ data }: Props) => {
   //         const lisLessonFinished = course.lessons.map(
   //           (item: any) => item.lesson.lessonNumber
   //         )
-  //         const isFinished = lisLessonFinished.includes(parseInt(lessonId))
+  //         const isFinished = lisLessonFinished.includes((lessonId))
   //         setCanNext(isFinished)
   //         setCanPrev(isFinished)
   //       }

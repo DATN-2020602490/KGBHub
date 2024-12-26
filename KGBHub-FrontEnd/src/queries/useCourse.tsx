@@ -3,13 +3,54 @@ import {
   courseManagerApiRequests,
   coursePublicApiRequests,
 } from '@/services/course.service'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import QUERY_KEYS from '@/constants/query-keys'
 
-export const useListCoursePublic = (params?: string) => {
-  return useQuery({
+export const useListCoursePublic = (params: {
+  limit?: number
+  offset?: number
+  search?: string
+  categories?: string
+  orderBy?: string
+  direction?: string
+  isBestSeller?: boolean
+  myOwn?: boolean
+  byAuthor?: string
+}) => {
+  const limit = params.limit || 12
+  const initialOffset = params.offset || 0
+
+  return useInfiniteQuery({
     queryKey: [QUERY_KEYS.GET_LIST_COURSES_PUBLIC, params],
-    queryFn: () => coursePublicApiRequests.getList(params),
+    queryFn: ({ pageParam = initialOffset }) => {
+      const queryParams = new URLSearchParams(
+        Object.entries({
+          ...params,
+          offset: pageParam,
+          limit,
+        })
+          .filter(([_, value]) => value !== undefined && value !== null)
+          .reduce((acc, [key, value]) => {
+            acc[key] = value.toString()
+            return acc
+          }, {} as Record<string, string>)
+      ).toString()
+      return coursePublicApiRequests.getList(
+        queryParams ? `?${queryParams}` : ''
+      )
+    },
+    initialPageParam: initialOffset,
+    getNextPageParam: (lastPage) => {
+      const totalItemsLoaded = lastPage.pagination.page * limit
+      return totalItemsLoaded < lastPage.pagination.total
+        ? totalItemsLoaded
+        : undefined
+    },
   })
 }
 

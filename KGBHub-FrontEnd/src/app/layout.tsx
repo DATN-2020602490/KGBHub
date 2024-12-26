@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning={false}>
-      <body className={`${inter.className} bg-background`}>
+      <body className={`app ${inter.className} bg-background`} id="app">
         <RootProvider>{children}</RootProvider>
       </body>
     </html>

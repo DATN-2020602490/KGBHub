@@ -205,7 +205,7 @@ const DiscounSetting = ({
 }) => {
   const [search, setSearch] = useState('')
 
-  const { data } = useListCoursePublic(`?search=${search}`)
+  const { data } = useListCoursePublic({ search })
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
   return (
     <>
@@ -308,7 +308,8 @@ const DiscounSetting = ({
                         </div>
                       </div>
                     ))}
-                    {data?.payload
+                    {data?.pages
+                      ?.flatMap((page) => page.payload)
                       ?.filter(
                         (course) =>
                           !coursesSelected.some(

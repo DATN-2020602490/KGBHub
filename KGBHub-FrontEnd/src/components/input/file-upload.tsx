@@ -83,7 +83,7 @@ const FileUpload = ({
                 width={128}
                 height={128}
                 alt="preview"
-                className="w-32 h-32 object-cover mx-auto rounded-full"
+                className="w-32 h-32 object-cover mx-auto rounded-full !aspect-square"
               />
             ) : (
               <video

@@ -50,10 +50,36 @@ export const courseManagerApiRequests = {
 }
 
 export const coursePublicApiRequests = {
-  getList: (params: string = '') =>
+  getList: (params: string) =>
     http.get<Course[]>(`-public/courses` + params, {
       cache: 'no-store',
     }),
+  // getList: (params: {
+  //   limit?: number
+  //   offset?: number
+  //   search?: string
+  //   categories?: string
+  //   orderBy?: string
+  //   direction?: string
+  //   isBestSeller?: boolean
+  //   myOwn?: boolean
+  //   byAuthor?: string
+  // }) => {
+  //   const queryParams = new URLSearchParams(
+  //     Object.entries(params)
+  //       .filter(([_, value]) => value !== undefined && value !== null)
+  //       .reduce((acc, [key, value]) => {
+  //         acc[key] = value.toString()
+  //         return acc
+  //       }, {} as Record<string, string>)
+  //   ).toString()
+  //   return http.get<Course[]>(
+  //     `-public/courses` + queryParams ? `?${queryParams}` : '',
+  //     {
+  //       cache: 'no-store',
+  //     }
+  //   )
+  // },
 
   get: (courseId: string, accessToken?: string) =>
     http.get<Course>(`-public/courses/${courseId}`, {

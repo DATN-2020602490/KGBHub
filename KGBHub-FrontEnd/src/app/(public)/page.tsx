@@ -6,7 +6,10 @@ import RecentCourseSection from '@/components/homePage/recent-course-section'
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between mt-10 sm:mt-8 space-y-8">
+    <main
+      className="flex min-h-screen flex-col items-center justify-between mt-10 sm:mt-8 space-y-8"
+      id="home-page"
+    >
       <Intro />
 
       {/* <Link href="/promotions" className="w-full">

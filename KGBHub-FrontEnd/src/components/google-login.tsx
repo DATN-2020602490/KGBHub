@@ -22,7 +22,8 @@ const GoogleLogin = () => {
       localStorage.setItem('accessToken', accessToken)
       localStorage.setItem('refreshToken', refreshToken)
       updateUser(res.payload.data)
-      router.push("/")
+      router.push('/')
+      router.refresh()
     },
   })
   return (

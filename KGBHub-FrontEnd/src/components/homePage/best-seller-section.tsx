@@ -7,8 +7,11 @@ import { A11y, Navigation, Pagination } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
 const BestSellerSection = () => {
-  const { data, isLoading } = useListCoursePublic('?isBestSeller=true&limit=8')
-  const bestSellers = data?.payload
+  const { data, isLoading } = useListCoursePublic({
+    isBestSeller: true,
+    limit: 8,
+  })
+  const bestSellers = data?.pages.flatMap((page) => page.payload)
   console.log(data)
   return (
     <div className="slider-cards relative">

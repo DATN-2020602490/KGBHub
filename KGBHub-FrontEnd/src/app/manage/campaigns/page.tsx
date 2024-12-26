@@ -10,7 +10,9 @@ import {
   Button,
   Chip,
   Image,
+  Pagination,
   SortDescriptor,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -19,22 +21,30 @@ import {
   TableRow,
   Tooltip,
 } from '@nextui-org/react'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { toast } from 'react-toastify'
+
+type Props = {
+  searchParams: { page: string }
+}
+
+const LIMIT = 10
 
 const columns = [
   { name: 'NAME', uid: 'name', sortable: true },
-  { name: 'TIME REMAINING', uid: 'timeRemaining' },
+  { name: 'TYPE', uid: 'type', sortable: true },
   { name: 'STATUS', uid: 'status', sortable: true },
   { name: 'ACTIONS', uid: 'actions' },
 ]
 
-export default function Page() {
+export default function Page({ searchParams }: Props) {
+  const { page } = searchParams
   const { push } = useRouter()
-  const { data } = useCampaigns()
+  const { data, isLoading } = useCampaigns(
+    `?limit=${LIMIT}&offset=${LIMIT * (Number(page || 1) - 1)}`
+  )
   const deleteCampaignMutation = useDeleteCampaignMutation()
   const [filterValue, setFilterValue] = React.useState('')
 
@@ -56,6 +66,11 @@ export default function Page() {
 
     return filteredUsers
   }, [data, filterValue])
+
+  const totalPage = useMemo(
+    () => data?.pagination?.totalPages,
+    [data?.pagination?.totalPages]
+  )
 
   const deleteCampaign = async (data: Campaign) => {
     try {
@@ -112,12 +127,8 @@ export default function Page() {
               {campaign.active ?? ''}
             </Chip>
           )
-        case 'timeRemaining':
-          const remainingTime = intervalToDuration({
-            end: campaign.endAt,
-            start: new Date(),
-          })
-          return <span>{formatDuration(remainingTime)}</span>
+        case 'type':
+          return <span>{campaign.type}</span>
         case 'status':
           return (
             <Chip
@@ -135,7 +146,7 @@ export default function Page() {
               <Tooltip content="Edit">
                 <span
                   className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                  onClick={() => push(`/manage/courses/${campaign.id}`)}
+                  onClick={() => push(`/manage/campaigns/edit/${campaign.id}`)}
                 >
                   <EditIcon className="text-warning" />
                 </span>
@@ -164,7 +175,7 @@ export default function Page() {
       <Table
         aria-label="Example table with custom cells, pagination and sorting"
         isHeaderSticky
-        bottomContentPlacement="outside"
+        bottomContentPlacement="inside"
         sortDescriptor={sortDescriptor}
         topContentPlacement="outside"
         onSortChange={setSortDescriptor}
@@ -181,7 +192,12 @@ export default function Page() {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={'No users found'} items={sortedItems}>
+        <TableBody
+          emptyContent={'No users found'}
+          items={sortedItems}
+          isLoading={isLoading}
+          loadingContent={<Spinner />}
+        >
           {(item: any) => (
             <TableRow key={item.id}>
               {(columnKey: any) => (
@@ -191,6 +207,15 @@ export default function Page() {
           )}
         </TableBody>
       </Table>
+      <Pagination
+        initialPage={1}
+        className="mx-auto w-fit mt-2"
+        page={Number(page || 1)}
+        total={totalPage ?? 1}
+        onChange={(e) => {
+          push('/manage/campaigns?page=' + e, { scroll: false })
+        }}
+      />
     </>
   )
 }

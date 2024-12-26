@@ -557,7 +557,14 @@ export const estimate = async (
   const feeDiscount = voucher
     ? voucher.type === VoucherType.FEE_PERCENTAGE
     : false;
-
+  const resVoucher = voucher
+    ? {
+        amount: BigNumber(0),
+      }
+    : null;
+  const resDiscount = {
+    amount: BigNumber(0),
+  };
   for (const courseId of courseIds) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
@@ -592,6 +599,9 @@ export const estimate = async (
       latestPrice = BigNumber(course.priceAmount)
         .times(100 - voucher.value)
         .dividedBy(100);
+      resVoucher.amount = resVoucher.amount.plus(
+        BigNumber(course.priceAmount).minus(latestPrice),
+      );
     }
 
     // Apply campaign discount if applicable
@@ -599,6 +609,9 @@ export const estimate = async (
       latestPrice = BigNumber(course.priceAmount)
         .times(100 - campaignDiscount.value)
         .dividedBy(100);
+      resDiscount.amount = resDiscount.amount.plus(
+        BigNumber(course.priceAmount).minus(latestPrice),
+      );
     }
 
     totalAmount = totalAmount.plus(latestPrice);
@@ -611,14 +624,39 @@ export const estimate = async (
     PaymentPlatform.STRIPE,
     feeDiscount ? voucher.value : 0,
   );
+  const orgFee = BigNumber(totalAmount).times(5).dividedBy(100);
+  if (voucher) {
+    const disFee = BigNumber(totalAmount)
+      .times(5)
+      .dividedBy(100)
+      .times(feeDiscount ? 100 - voucher.value : 0)
+      .dividedBy(100);
+    resVoucher.amount = resVoucher.amount.plus(orgFee.minus(disFee));
+  }
+  // originalAmount = originalAmount.plus(orgFee);
 
   // Estimate the tip
   const tip = await getPriceForTip(BigNumber(totalAmount), tipPercent);
+  // originalAmount = originalAmount.plus(
+  //   BigNumber(tip.unit_amount_decimal).dividedBy(100),
+  // );
 
   return {
+    originalAmount: originalAmount,
+    originalFee: BigNumber(originalAmount).times(5).dividedBy(100),
     amount: totalAmount,
     fee: BigNumber(platformFee.unit_amount_decimal).dividedBy(100),
     tip: BigNumber(tip.unit_amount_decimal).dividedBy(100),
+    voucherAmount: resVoucher
+      ? resVoucher.amount.lte(BigNumber(0))
+        ? BigNumber(0)
+        : resVoucher.amount
+      : BigNumber(0),
+    discountAmount: resDiscount
+      ? resDiscount.amount.lte(BigNumber(0))
+        ? BigNumber(0)
+        : resDiscount.amount
+      : BigNumber(0),
   };
 };
 

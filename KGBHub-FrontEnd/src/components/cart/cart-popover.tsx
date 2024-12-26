@@ -1,6 +1,7 @@
 'use client'
 import Empty from '@/components/common/empty'
 import CartIcon from '@/components/icons/cart-icon'
+import { useCart } from '@/contexts/cart'
 import { generateMediaLink } from '@/lib/utils'
 import { useMyCart } from '@/queries/useCart'
 import {
@@ -14,14 +15,15 @@ import {
 import Link from 'next/link'
 
 const CartPopover = () => {
+  const { cart } = useCart()
   const { data, isLoading } = useMyCart()
   const myCart = data?.payload
   return (
     <Popover placement="bottom" showArrow shouldBlockScroll>
       <Badge
         color="danger"
-        content={myCart?.coursesOnCarts?.length}
-        isInvisible={!myCart?.coursesOnCarts?.length}
+        content={cart?.coursesOnCarts?.length}
+        isInvisible={!cart?.coursesOnCarts?.length}
         shape="circle"
       >
         <PopoverTrigger>
@@ -32,10 +34,9 @@ const CartPopover = () => {
       </Badge>
       <PopoverContent className="p-4">
         <h3 className="text-lg font-semibold mb-2">My cart</h3>
-        {!!myCart?.coursesOnCarts?.length &&
-        myCart?.coursesOnCarts?.length > 0 ? (
+        {!!cart?.coursesOnCarts?.length && cart?.coursesOnCarts?.length > 0 ? (
           <div className="max-w-sm space-y-4">
-            {myCart?.coursesOnCarts.map((course) => (
+            {cart?.coursesOnCarts.map((course: any) => (
               <Link
                 href={`/course/${course.courseId}`}
                 key={course.courseId}
@@ -61,7 +62,7 @@ const CartPopover = () => {
             <div className="flex justify-between items-center">
               <div className="space-x-2">
                 <span>Total:</span>
-                <span>{myCart?.coursesOnCarts.length}</span>
+                <span>{cart?.coursesOnCarts.length}</span>
               </div>
               <Button
                 as={Link}

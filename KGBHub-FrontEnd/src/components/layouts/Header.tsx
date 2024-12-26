@@ -62,7 +62,7 @@ const Header = ({ className }: { className?: string }) => {
       isBordered
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
-      className={cn('lg:[&>header]:max-w-full lg:[&>header]:px-40', className)}
+      className={cn('lg:[&>header]:max-w-full 2xl:[&>header]:px-40', className)}
     >
       <NavbarContent className="sm:hidden" justify="start">
         <NavbarMenuToggle

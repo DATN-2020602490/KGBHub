@@ -15,6 +15,8 @@ export async function POST(request: Request) {
   }
   try {
     const result = await authApiRequest.logout(accessToken)
+    cookieStore.delete('accessToken')
+    cookieStore.delete('refreshToken')
     return Response.json(result.payload)
   } catch (error) {
     return Response.json(

@@ -76,7 +76,7 @@ const ListPartsAccordion = ({ data, isAuth = false }: Props) => {
     try {
       const res = await courseManagerApiRequests.updatePart(
         courseId as string,
-        Number((partData as any).id),
+        ((partData as any).id),
         values
       )
       if (res.status === 200) {

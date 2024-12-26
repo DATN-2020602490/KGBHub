@@ -18,7 +18,7 @@ const LearningVideoLesson = ({ data }: Props) => {
   const { courseId } = useParams()
   const [videoURL, setVideoURL] = React.useState('')
   const courseProgress = progress?.find(
-    (course: any) => course.courseId === Number(courseId)
+    (course: any) => course.courseId === (courseId)
   )
 
   useEffect(() => {

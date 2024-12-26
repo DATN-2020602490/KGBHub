@@ -1,7 +1,12 @@
 'use client'
 import { Course } from '@/models'
 import { useAccountContext } from '@/contexts/account'
-import { formatDuration, generateMediaLink } from '@/lib/utils'
+import {
+  cn,
+  formatDuration,
+  formatNumberWithCommas,
+  generateMediaLink,
+} from '@/lib/utils'
 import { Button, Divider } from '@nextui-org/react'
 import { Clock, FileBadge, FolderOpen } from 'lucide-react'
 import Image from 'next/image'
@@ -16,6 +21,10 @@ import {
 } from '@/queries/useCart'
 import pluralize from 'pluralize'
 import { interactApiRequest } from '@/services/interact.service'
+import PromotionSelectorModal from '@/components/modals/promotion-selector-modal'
+import { useEffect, useState } from 'react'
+import { useEstimateMutation } from '@/queries'
+import { useCart } from '@/contexts/cart'
 
 type Props = {
   data: Course
@@ -23,11 +32,16 @@ type Props = {
 
 const CourseSidebar = ({ data }: Props) => {
   const { data: cartData } = useMyCart()
+  const { fetchCart } = useCart()
   const { coursesHearted, setCoursesHearted } = useAccountContext()
   const addToCartMutation = useAddToCartMutation()
   const removeToCartMutation = useRemoveToCartMutation()
   const buyCourseMutation = useBuyCourseMutation()
   const { refresh } = useRouter()
+  const [promotionSelected, setPromotionSelected] = useState<any>()
+  const [estimate, setEstimate] = useState<any>()
+  const estimateMutation = useEstimateMutation()
+
   const {
     courseName,
     priceAmount,
@@ -75,7 +89,9 @@ const CourseSidebar = ({ data }: Props) => {
       }
       const res = await buyCourseMutation.mutateAsync({
         courseId: id,
+        tipPercent: 0,
         successUrl: window.location.href,
+        code: promotionSelected?.vouchers?.[0]?.code,
       })
       if (res.status === 200) {
         if ((res.payload as { checkoutUrl: string }).checkoutUrl) {
@@ -101,6 +117,7 @@ const CourseSidebar = ({ data }: Props) => {
       const res = await addToCartMutation.mutateAsync(id)
       if (res.status === 200) {
         toast.success('Added course to cart')
+        fetchCart()
       }
     } catch (error) {}
   }
@@ -117,6 +134,20 @@ const CourseSidebar = ({ data }: Props) => {
     } catch (error) {}
   }
 
+  const estimateHandler = async () => {
+    if (!promotionSelected) return
+    try {
+      const res = await estimateMutation.mutateAsync({
+        courseIds: [id],
+        code: promotionSelected?.vouchers?.[0]?.code,
+      })
+      setEstimate(res.payload)
+    } catch (error) {}
+  }
+  useEffect(() => {
+    estimateHandler()
+  }, [promotionSelected?.campaign?.id])
+
   return (
     <div className="flex-1 p-3 lg:-mt-28 ml-4 border rounded-lg bg-background h-fit space-y-2 lg:sticky top-24">
       <Image
@@ -127,7 +158,23 @@ const CourseSidebar = ({ data }: Props) => {
         sizes="1000px"
         className="w-full object-cover rounded-md"
       />
-      <p className="text-xl">{'$' + priceAmount}</p>
+      <div className="flex items-center gap-x-4">
+        <p
+          className={cn(
+            'text-xl',
+            promotionSelected &&
+              ~(estimate?.amount ?? 0) !== priceAmount &&
+              'line-through text-destructive text-base'
+          )}
+        >
+          {'$' + formatNumberWithCommas(priceAmount)}
+        </p>
+        {promotionSelected && ~(estimate?.amount ?? 0) !== priceAmount && (
+          <span className="text-green-600 text-xl">
+            ${formatNumberWithCommas(estimate?.amount)}
+          </span>
+        )}
+      </div>
       <Button
         className="w-full"
         color="secondary"
@@ -164,6 +211,12 @@ const CourseSidebar = ({ data }: Props) => {
         <Button className="w-full" color="primary" onClick={buyCourseHandler}>
           Buy now
         </Button>
+      )}
+      {!isBought && (
+        <PromotionSelectorModal
+          promotionSelected={promotionSelected}
+          setPromotionSelected={setPromotionSelected}
+        />
       )}
       <Divider className="my-2" />
       <ul className="space-y-1.5">

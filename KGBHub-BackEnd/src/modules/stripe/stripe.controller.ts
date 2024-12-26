@@ -123,16 +123,23 @@ export default class StripeController extends BaseController {
     }
     const tipPercent = req.gp<number>("tipPercent", 0, Number);
     const code = req.gp<string>("code", null, String);
-    const { amount, fee, tip } = await estimate(
-      reqUser.id,
-      courseIds,
-      tipPercent,
-      code,
-    );
+    const {
+      amount,
+      fee,
+      tip,
+      voucherAmount,
+      discountAmount,
+      originalAmount,
+      originalFee,
+    } = await estimate(reqUser.id, courseIds, tipPercent, code);
     return res.status(200).data({
+      originalAmount: originalAmount.toNumber(),
+      originalFee: originalFee.toNumber(),
       amount: amount.toNumber(),
       fee: fee.toNumber(),
       tip: tip.toNumber(),
+      voucherAmount: voucherAmount.toNumber(),
+      discountAmount: discountAmount.toNumber(),
     });
   };
 }

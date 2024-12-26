@@ -80,7 +80,8 @@ export type Campaign = {
   active: boolean
   totalVoucher: number
   totalUsed: number
-
+  feeVoucherValue?: number
+  productVoucherValue?: number
   campaignUsers: CampaignUser[]
   vouchers: Voucher[]
   campaignDiscounts: CampaignDiscount[]

@@ -67,13 +67,9 @@ const OrderDetailPopup = ({
   }
 
   const savings = {
-    amount: orderDetails.originalAmount - orderDetails.amount,
-    fee: orderDetails.originalFee - orderDetails.platformFee
+    amount: orderDetails.originalAmount - orderDetails.amount < 0 ? 0 : orderDetails.originalAmount - orderDetails.amount,
+    fee: orderDetails.originalFee - orderDetails.platformFee < 0 ? 0 : orderDetails.originalFee - orderDetails.platformFee
   };
-
-  const hasAmountDifference = orderDetails.originalAmount > orderDetails.amount;
-  const hasFeeDifference = orderDetails.originalFee > orderDetails.platformFee;
-  const hasSavings = savings.amount > 0 || savings.fee > 0;
 
   return (
     <div className="fixed inset-0 bg-card/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -163,7 +159,7 @@ const OrderDetailPopup = ({
               <span>Original Amount:</span>
               <div className="text-right">
                 <span className="line-through text-gray-500">
-                  {(orderDetails.originalAmount + orderDetails.originalFee).toLocaleString()} {orderDetails.currency}
+                  {(orderDetails.amount + orderDetails.platformFee + savings.fee + savings.amount).toLocaleString()} {orderDetails.currency}
                 </span>
               </div>
             </div>

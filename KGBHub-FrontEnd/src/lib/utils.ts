@@ -138,3 +138,7 @@ export function formatBytes(bytes: any, decimals = 2) {
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }
+
+export function formatNumberWithCommas(value: number) {
+  return value ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0'
+}

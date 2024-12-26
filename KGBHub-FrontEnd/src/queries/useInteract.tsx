@@ -4,7 +4,12 @@ import {
   CommentBodyType,
   interactApiRequest,
 } from '@/services/interact.service'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 export const useInteractQuery = (params: {
   id: string
@@ -12,17 +17,33 @@ export const useInteractQuery = (params: {
   limit?: number
   offset?: number
 }) => {
-  const { id: postId, target_resource, limit, offset } = params
-  return useQuery({
-    queryKey: [QUERY_KEYS.GET_INTERACTS, postId],
+  const limit = params.limit || 6
+  const initialOffset = params.offset || 0
+  return useInfiniteQuery({
+    queryKey: [QUERY_KEYS.GET_INTERACTS, params.id],
 
-    queryFn: () =>
-      interactApiRequest.get({
-        id: postId,
-        target_resource,
-        limit,
-        offset,
-      }),
+    queryFn: ({ pageParam = initialOffset }) => {
+      const queryParams = new URLSearchParams(
+        Object.entries({
+          ...params,
+          offset: pageParam,
+          limit,
+        })
+          .filter(([_, value]) => value !== undefined && value !== null)
+          .reduce((acc, [key, value]) => {
+            acc[key] = (value as string | number).toString()
+            return acc
+          }, {} as Record<string, string>)
+      ).toString()
+      return interactApiRequest.get(queryParams ? `?${queryParams}` : '')
+    },
+    initialPageParam: initialOffset,
+    getNextPageParam: (lastPage) => {
+      const totalItemsLoaded = lastPage.pagination.page * limit
+      return totalItemsLoaded < lastPage.pagination.total
+        ? totalItemsLoaded
+        : undefined
+    },
   })
 }
 

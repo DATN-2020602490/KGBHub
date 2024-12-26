@@ -32,7 +32,7 @@ const EditUserModal = ({ user }: Props) => {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                Create Course
+                Edit User
               </ModalHeader>
               <ModalBody>
                 <ProfileForm data={user} />

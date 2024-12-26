@@ -21,6 +21,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
+  Spinner,
 } from '@nextui-org/react'
 import { generateMediaLink } from '@/lib/utils'
 import { Course } from '@/models'
@@ -68,7 +69,7 @@ const statusOptions = [
   { name: CourseStatus.PENDING, uid: 'pending' },
 ]
 
-export default function ManageCourseTable({ data }: { data: any }) {
+export default function ManageCourseTable({ data, isLoading }: any) {
   const { push } = useRouter()
   const approveCourseMutation = useApproveCourseMutation()
   const deleteCourseMutation = useDeleteCourseMutation()
@@ -93,6 +94,7 @@ export default function ManageCourseTable({ data }: { data: any }) {
   }, [visibleColumns])
 
   const filteredItems = React.useMemo(() => {
+    if (!data) return []
     let filteredUsers = [...data]
 
     if (hasSearchFilter) {
@@ -245,7 +247,12 @@ export default function ManageCourseTable({ data }: { data: any }) {
           </TableColumn>
         )}
       </TableHeader>
-      <TableBody emptyContent={'No courses found'} items={sortedItems}>
+      <TableBody
+        emptyContent={'No courses found'}
+        loadingContent={<Spinner />}
+        isLoading={isLoading}
+        items={sortedItems}
+      >
         {(item: any) => (
           <TableRow key={item.id}>
             {(columnKey: any) => (

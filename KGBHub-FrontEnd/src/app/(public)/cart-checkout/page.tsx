@@ -1,52 +1,65 @@
 'use client'
 import { Heading } from '@/components/common/heading'
-import { generateMediaLink } from '@/lib/utils'
-import { useMyPromotions } from '@/queries/useCampaigns'
-import { useMyCart } from '@/queries/useCart'
+import PromotionSelectorModal from '@/components/modals/promotion-selector-modal'
+import { useCart } from '@/contexts/cart'
+import { formatNumberWithCommas, generateMediaLink } from '@/lib/utils'
+import { useEstimateMutation } from '@/queries'
+import {
+  useClearMutation,
+  useMyCart,
+  useRemoveToCartMutation,
+} from '@/queries/useCart'
 import { cartApiRequest } from '@/services/cart.service'
 import {
   Button,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Radio,
-  RadioGroup,
   Table,
   TableBody,
   TableCell,
   TableColumn,
   TableHeader,
   TableRow,
-  useDisclosure,
 } from '@nextui-org/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 
 const CartCheckoutPage = () => {
+  const { replace } = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const { fetchCart, cart } = useCart()
   const [selectedKeys, setSelectedKeys] = useState<any>(new Set([]))
-  const [promotionSelected, setPromotionSelected] = useState<string>('')
-
+  const [promotionSelected, setPromotionSelected] = useState<any>()
+  const [estimate, setEstimate] = useState<any>()
   const { data: cartData } = useMyCart()
-  const totalPrice =
-    selectedKeys === 'all'
-      ? cartData?.payload?.coursesOnCarts?.reduce(
-          (acc: number, course: any) => acc + course.course.priceAmount,
+  const removeToCartMutation = useRemoveToCartMutation()
+  const clearMutation = useClearMutation()
+  const estimateMutation = useEstimateMutation()
+  const totalPriceOriginal =
+    (selectedKeys === 'all'
+      ? cart?.coursesOnCarts?.reduce(
+          (acc: number, course: any) => acc + course?.course?.priceAmount,
           0
         )
-      : cartData?.payload?.coursesOnCarts
+      : cart?.coursesOnCarts
           ?.filter((item: any) => [...selectedKeys]?.includes(item.courseId))
           ?.reduce(
-            (acc: number, course: any) => acc + course.course.priceAmount,
+            (acc: number, course: any) => acc + course?.course?.priceAmount,
             0
-          )
+          )) || 0
   const removeItem = async (courseIds: string[]) => {
     try {
-      const res = await cartApiRequest.remove(courseIds)
+      await removeToCartMutation.mutateAsync(courseIds)
+      fetchCart()
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const clearCartHandler = async () => {
+    try {
+      await clearMutation.mutateAsync()
+      fetchCart()
     } catch (error) {
       console.log(error)
     }
@@ -54,14 +67,20 @@ const CartCheckoutPage = () => {
   const checkoutCart = async () => {
     try {
       setIsLoading(true)
-      const data =
-        selectedKeys === 'all'
-          ? cartData?.payload?.coursesOnCarts?.map((course) => course.courseId)
-          : [...selectedKeys]
-      const res = await cartApiRequest.checkout(data as string[])
+      const courseIds: string[] =
+        (selectedKeys === 'all'
+          ? cart?.coursesOnCarts?.map((course: any) => course.courseId)
+          : [...selectedKeys]) || []
+      const res = await cartApiRequest.checkout({
+        courseIds,
+        successUrl: 'https://kgb-hub.harmoury.space/',
+        code: promotionSelected?.vouchers?.[0]?.code,
+      })
       if (res.status === 200) {
-        if ((res.payload as { url: string }).url) {
-          window.location.href = (res.payload as { url: string }).url
+        if ((res.payload as { checkoutUrl: string }).checkoutUrl) {
+          window.location.href = (
+            res.payload as { checkoutUrl: string }
+          ).checkoutUrl
         } else {
           toast.success('Buy course successfully')
         }
@@ -71,54 +90,64 @@ const CartCheckoutPage = () => {
       setIsLoading(false)
     }
   }
-  if (!cartData) return
-  const rows = cartData?.payload?.coursesOnCarts?.map((course: any) => ({
-    key: course.coureseId,
-    name: (
-      <Link
-        href={'/course/' + course.courseId}
-        className="flex items-center gap-2 w-fit"
-      >
-        <Image
-          src={generateMediaLink(course.course.thumbnail ?? '')}
-          alt={course.course.courseName}
-          width={400}
-          height={400}
-          className="object-cover w-14"
-        />
-        <span className="line-clamp-2">{course.course.courseName}</span>
-      </Link>
-    ),
-    price: '$' + course.course.priceAmount,
-    action: <Button size="sm" color="danger"></Button>,
-  }))
-  // let list = useAsyncList({
-  //   async load({ signal }) {
-  //     return {
-  //       items: cart.coursesOnCarts,
-  //     }
-  //   },
-  //   async sort({ items, sortDescriptor }) {
-  //     return {
-  //       items: items.sort((a:any, b:any) => {
-  //         let first = a[sortDescriptor.column]
-  //         let second = b[sortDescriptor.column]
-  //         let cmp =
-  //           (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1
+  const estimateHandler = async () => {
+    const courseIds =
+      (selectedKeys === 'all'
+        ? cart?.coursesOnCarts?.map((course: any) => course.courseId)
+        : [...selectedKeys]) || []
+    if (courseIds.length <= 0) return
+    try {
+      const res = await estimateMutation.mutateAsync({
+        courseIds,
+        code: promotionSelected?.vouchers?.[0]?.code,
+      })
+      setEstimate(res.payload)
+    } catch (error) {}
+  }
+  useEffect(() => {
+    estimateHandler()
+  }, [JSON.stringify(selectedKeys), promotionSelected?.campaign?.id])
 
-  //         if (sortDescriptor.direction === 'descending') {
-  //           cmp *= -1
-  //         }
+  if (!cart) {
+    return
+  }
+  if (cart?.coursesOnCarts.length <= 0) {
+    replace('/')
+    return
+  }
+  const rows =
+    cart?.coursesOnCarts.length > 0
+      ? cart?.coursesOnCarts?.map((course: any) => ({
+          key: course?.coureseId,
+          name: (
+            <Link
+              href={'/course/' + course?.courseId}
+              className="flex items-center gap-2 w-fit"
+            >
+              <Image
+                src={generateMediaLink(course?.course?.thumbnail ?? '')}
+                alt={course?.course?.courseName}
+                width={400}
+                height={400}
+                className="object-cover w-14"
+              />
+              <span className="line-clamp-2">{course?.course?.courseName}</span>
+            </Link>
+          ),
+          price: '$' + course?.course?.priceAmount,
+          action: <Button size="sm" color="danger"></Button>,
+        }))
+      : []
 
-  //         return cmp
-  //       }),
-  //     }
-  //   },
-  // })
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="space-y-4">
-        <Heading title="My cart" />
+        <div className="flex items-center justify-between">
+          <Heading title="My cart" />
+          <Button onClick={clearCartHandler} color="danger">
+            Clear cart
+          </Button>
+        </div>
         <Table
           // sortDescriptor={list.sortDescriptor}
           color={'primary'}
@@ -134,34 +163,34 @@ const CartCheckoutPage = () => {
             <TableColumn key="cartAction">ACTIONS</TableColumn>
           </TableHeader>
           <TableBody items={rows}>
-            {cartData?.payload?.coursesOnCarts?.length > 0 ? (
-              cartData?.payload.coursesOnCarts.map((course: any) => (
-                <TableRow key={course.courseId}>
+            {cart?.coursesOnCarts?.length > 0 ? (
+              cart?.coursesOnCarts.map((course: any) => (
+                <TableRow key={course?.courseId}>
                   <TableCell className="">
                     <Link
-                      href={'/course/' + course.courseId}
+                      href={'/course/' + course?.courseId}
                       className="flex items-center gap-2 w-fit"
                     >
                       <Image
                         src={generateMediaLink(
-                          course.course.thumbnailFileId ?? ''
+                          course?.course?.thumbnailFileId ?? ''
                         )}
-                        alt={course.course.courseName}
+                        alt={course?.course?.courseName}
                         width={400}
                         height={400}
                         className="object-cover w-14"
                       />
                       <span className="line-clamp-2">
-                        {course.course.courseName}
+                        {course?.course?.courseName}
                       </span>
                     </Link>
                   </TableCell>
-                  <TableCell>{'$' + course.course.priceAmount}</TableCell>
+                  <TableCell>{'$' + course?.course?.priceAmount}</TableCell>
                   <TableCell>
                     <Button
                       size="sm"
                       color="danger"
-                      onClick={() => removeItem([course.courseId])}
+                      onClick={() => removeItem([course?.courseId])}
                     >
                       Remove
                     </Button>
@@ -178,11 +207,49 @@ const CartCheckoutPage = () => {
         promotionSelected={promotionSelected}
         setPromotionSelected={setPromotionSelected}
       />
-      <div className="w-fit ml-auto flex gap-2 items-center">
+      <div className="text-end w-1/4 ml-auto">
         <div>
-          <span>{`Total: $${totalPrice}`}</span>
+          <span>Original amount:</span>
+          <span className="ml-2">
+            {formatNumberWithCommas(totalPriceOriginal ?? 0)}$
+          </span>
         </div>
-        <Button color="primary" onClick={checkoutCart}>
+        <div>
+          <span>Fee stripe:</span>
+          <span className="ml-2">
+            {formatNumberWithCommas(estimate?.originalFee ?? 0)}$
+          </span>
+        </div>
+        {!!estimate?.voucherAmount && (
+          <div>
+            <span>Voucher amount:</span>{' '}
+            <span className="text-destructive ml-2">
+              {formatNumberWithCommas(estimate.voucherAmount ?? 0)}$
+            </span>
+          </div>
+        )}
+        {!!estimate?.discountAmount && (
+          <div>
+            <span>Discount amount:</span>
+            <span className="text-destructive ml-2">
+              {formatNumberWithCommas(estimate.discountAmount ?? 0)}$
+            </span>
+          </div>
+        )}
+        <div>
+          <span>Total:</span>
+          <span className="text-green-600 ml-2">
+            {formatNumberWithCommas(
+              (estimate?.amount ?? 0) + (estimate?.fee ?? 0) <= 0
+                ? 0
+                : (estimate?.amount ?? 0) + (estimate?.fee ?? 0)
+            )}
+            $
+          </span>
+        </div>
+      </div>
+      <div className="w-1/6 ml-auto">
+        <Button className="w-full" color="primary" onClick={checkoutCart}>
           Pay now
         </Button>
       </div>
@@ -191,81 +258,3 @@ const CartCheckoutPage = () => {
 }
 
 export default CartCheckoutPage
-
-const PromotionSelectorModal = ({
-  promotionSelected,
-  setPromotionSelected,
-}: {
-  promotionSelected: string
-  setPromotionSelected: (value: string) => void
-}) => {
-  const { data } = useMyPromotions()
-  const myPromotions = data?.payload
-  console.log(myPromotions)
-  const { isOpen, onOpen, onOpenChange } = useDisclosure()
-  return (
-    <div className="flex flex-col gap-2">
-      <Button onPress={onOpen} className="max-w-fit">
-        Open Modal
-      </Button>
-
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl">
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                Modal Title
-              </ModalHeader>
-              <ModalBody>
-                <RadioGroup
-                  label="Select promotion"
-                  orientation="horizontal"
-                  value={promotionSelected}
-                  onValueChange={setPromotionSelected}
-                >
-                  <Radio value="auto">auto</Radio>
-                  <Radio value="top">top</Radio>
-                  <Radio value="bottom">bottom</Radio>
-                  <Radio value="center">center</Radio>
-                  <Radio value="top-center">top-center</Radio>
-                  <Radio value="bottom-center">bottom-center</Radio>
-                </RadioGroup>
-                <div className="space-y-2.5">
-                  {myPromotions?.map((promotion) => (
-                    <div
-                      key={promotion.id}
-                      className={`p-4 rounded-md border cursor-pointer flex gap-x-4`}
-                    >
-                      <Image
-                        src={generateMediaLink(
-                          promotion.campaign.coverFileId ?? ''
-                        )}
-                        alt={promotion.campaign.name}
-                        width={200}
-                        height={200}
-                        className="object-cover aspect-video w-32"
-                      />
-                      <div>
-                        <p className="text-semibold">
-                          {promotion.campaign.name}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Close
-                </Button>
-                <Button color="primary" onPress={onClose}>
-                  Action
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
-    </div>
-  )
-}

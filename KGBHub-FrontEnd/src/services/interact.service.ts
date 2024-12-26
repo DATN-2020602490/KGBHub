@@ -15,29 +15,10 @@ export type InteractResType = {
 }
 
 export const interactApiRequest = {
-  get: ({
-    id,
-    target_resource,
-    limit,
-    offset,
-  }: {
-    id: string
-    target_resource: TargetResourceType
-    limit?: number
-    offset?: number
-  }) => {
-    const queryParams = new URLSearchParams({
-      id,
-      target_resource,
-      ...(limit !== undefined && { limit: limit.toString() }),
-      ...(offset !== undefined && { offset: offset.toString() }),
-    }).toString()
-
-    return http.get<Comment[], { isHearted: boolean; hearsCount: number }>(
-      `/interacts?${queryParams}`
-    )
-  },
-
+  get: (params: string) =>
+    http.get<Comment[], { isHearted: boolean; hearsCount: number }>(
+      `/interacts${params}`
+    ),
   getRates: ({
     courseId,
     limit,

@@ -4,8 +4,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export const useCampaigns = (params?: any) => {
   return useQuery({
-    queryKey: [QUERY_KEYS.GET_LIST_CAMPAIGNS],
+    queryKey: [QUERY_KEYS.GET_LIST_CAMPAIGNS, params],
     queryFn: () => campaignService.getList(params),
+  })
+}
+
+export const useCampaign = (campaignId: string) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.GET_CAMPAIGN],
+    queryFn: () => campaignService.get(campaignId),
   })
 }
 
@@ -49,5 +56,10 @@ export const useCreateCampaignMutation = () => {
         queryKey: [QUERY_KEYS.GET_LIST_CAMPAIGNS],
       })
     },
+  })
+}
+export const useUpdateCampaignMutation = () => {
+  return useMutation({
+    mutationFn: (body: any) => campaignService.edit(body.id, body.payload),
   })
 }

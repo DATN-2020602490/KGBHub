@@ -1,7 +1,7 @@
 'use client'
 import { useAccountContext } from '@/contexts/account'
 import { authApiRequest } from '@/services/auth.service'
-import { redirect, usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 export default function ButtonLogout() {
   const { logout } = useAccountContext()
@@ -9,7 +9,7 @@ export default function ButtonLogout() {
   const pathname = usePathname()
   const handleLogout = async () => {
     try {
-      router.push("/")
+      router.push('/')
       await authApiRequest.logoutByNextServer()
       // router.push('/login')
     } catch (error) {

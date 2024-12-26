@@ -13,12 +13,12 @@ const BookmarkLesson = () => {
   const lessonId = searchParams.get('lesson')
   const { bookmarks, setBookmarksRefresh } = useBookmarks()
   const isBookmarked = bookmarks?.some(
-    (bookmark: any) => bookmark.lessonId === Number(lessonId)
+    (bookmark: any) => bookmark.lessonId === (lessonId)
   )
   const handleBookmarkLesson = async () => {
     try {
       const bookmarkId = bookmarks?.find(
-        (bookmark: any) => bookmark.lessonId === Number(lessonId)
+        (bookmark: any) => bookmark.lessonId === (lessonId)
       )?.id
       const res = isBookmarked
         ? await BookmarkApiRequest.delete(bookmarkId)
@@ -41,7 +41,7 @@ const BookmarkLesson = () => {
           className={cn(
             'stroke-yellow-500',
             bookmarks?.some(
-              (bookmark: any) => bookmark?.lessonId === Number(lessonId)
+              (bookmark: any) => bookmark?.lessonId === (lessonId)
             ) && 'fill-yellow-400'
           )}
         />

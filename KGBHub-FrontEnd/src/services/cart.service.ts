@@ -15,6 +15,9 @@ export const cartApiRequest = {
 
   clear: () => http.post('-public/carts/actions/clear', {}),
 
-  checkout: (courseIds: string[]) =>
-    http.post('/stripe/checkout-from-cart', { courseIds }),
+  checkout: (body: {
+    courseIds: string[]
+    successUrl?: string
+    code?: string
+  }) => http.post('/stripe/checkout-from-cart', { ...body, tipPercent: 0 }),
 }

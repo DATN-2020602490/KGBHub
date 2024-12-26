@@ -467,6 +467,8 @@ export default class CampaignController extends BaseController {
       },
       orderBy: { createdAt: "desc" },
     })) as CampaignUser[];
-    return res.status(200).data(campaignUsers);
+    return res
+      .status(200)
+      .data(campaignUsers.filter((cU) => cU.vouchers.length > 0));
   };
 }

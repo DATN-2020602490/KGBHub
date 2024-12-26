@@ -2,6 +2,7 @@
 import { User } from '@/models'
 import { authApiRequest } from '@/services/auth.service'
 import { userApiRequest } from '@/services/user.service'
+import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState } from 'react'
 
 interface IContext {
@@ -34,6 +35,7 @@ export default function AccountProvider({
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
   const [user, setUser] = useState<User | undefined | null>(undefined)
   const [initDone, setInitDone] = useState(false)
   const [coursesBought, setCoursesBought] = useState<any>([])
@@ -48,6 +50,7 @@ export default function AccountProvider({
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
     setUser(null)
+    router.refresh()
   }
 
   const refreshToken = async () => {
