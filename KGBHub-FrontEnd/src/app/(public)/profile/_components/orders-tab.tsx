@@ -1,12 +1,13 @@
 "use client";
 import { Order } from "@/models/order";
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Empty from "@/components/common/empty";
 import { userApiRequest } from "@/services/user.service";
 import { X } from "lucide-react";
 import Link from "next/link";
 import { ProductType } from "@/constants";
+import { Pagination } from "@nextui-org/react";
 
 const OrderDetailPopup = ({
   order,
@@ -67,8 +68,14 @@ const OrderDetailPopup = ({
   }
 
   const savings = {
-    amount: orderDetails.originalAmount - orderDetails.amount < 0 ? 0 : orderDetails.originalAmount - orderDetails.amount,
-    fee: orderDetails.originalFee - orderDetails.platformFee < 0 ? 0 : orderDetails.originalFee - orderDetails.platformFee
+    amount:
+      orderDetails.originalAmount - orderDetails.amount < 0
+        ? 0
+        : orderDetails.originalAmount - orderDetails.amount,
+    fee:
+      orderDetails.originalFee - orderDetails.platformFee < 0
+        ? 0
+        : orderDetails.originalFee - orderDetails.platformFee,
   };
 
   return (
@@ -133,46 +140,59 @@ const OrderDetailPopup = ({
                   )}
                 </span>
                 <div className="text-right flex flex-col whitespace-nowrap">
-                  {productOrder.product.type !== ProductType.KGBHUB_SERVICE_TIP && (
-                    productOrder.product.courseId ? (
+                  {productOrder.product.type !==
+                    ProductType.KGBHUB_SERVICE_TIP &&
+                    (productOrder.product.courseId ? (
                       <span className="line-through text-gray-500">
-                        {productOrder.product.price.toLocaleString()} {orderDetails.currency}
+                        {productOrder.product.price.toLocaleString()}{" "}
+                        {orderDetails.currency}
                       </span>
-                    ):(
-                      (order as any).originalFee > order.platformFee ? (
-                        <span className="line-through text-gray-500">
-                          {(order as any).originalFee.toLocaleString()} {orderDetails.currency}
-                        </span>
-                      ): <></>
-                    )
-                  )}
+                    ) : (order as any).originalFee > order.platformFee ? (
+                      <span className="line-through text-gray-500">
+                        {(order as any).originalFee.toLocaleString()}{" "}
+                        {orderDetails.currency}
+                      </span>
+                    ) : (
+                      <></>
+                    ))}
                   <span className="font-semibold">
-                    {productOrder.price.toLocaleString()} {orderDetails.currency}
+                    {productOrder.price.toLocaleString()}{" "}
+                    {orderDetails.currency}
                   </span>
                 </div>
               </div>
             ))}
           </div>
-          
+
           <div className="pt-2 border-t space-y-2">
             <div className="flex justify-between">
               <span>Original Amount:</span>
               <div className="text-right">
                 <span className="line-through text-gray-500">
-                  {(orderDetails.amount + orderDetails.platformFee + savings.fee + savings.amount).toLocaleString()} {orderDetails.currency}
+                  {(
+                    orderDetails.amount +
+                    orderDetails.platformFee +
+                    savings.fee +
+                    savings.amount
+                  ).toLocaleString()}{" "}
+                  {orderDetails.currency}
                 </span>
               </div>
             </div>
             <div className="flex justify-between text-green-600">
               <span>Total Savings:</span>
               <span>
-                {(savings.amount + savings.fee).toLocaleString()} {orderDetails.currency}
+                {(savings.amount + savings.fee).toLocaleString()}{" "}
+                {orderDetails.currency}
               </span>
             </div>
             <div className="flex justify-between font-bold pt-2">
               <span>Final Amount:</span>
               <span>
-                {(orderDetails.amount + orderDetails.platformFee).toLocaleString()} {orderDetails.currency}
+                {(
+                  orderDetails.amount + orderDetails.platformFee
+                ).toLocaleString()}{" "}
+                {orderDetails.currency}
               </span>
             </div>
           </div>
@@ -223,20 +243,25 @@ const OrderCard = ({ order }: { order: Order }) => {
   );
 };
 
+const LIMIT = 6;
+
 const OrderTab = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const res = await userApiRequest.getOrders({
-          limit: 12,
-          offset: 0,
+          limit: LIMIT,
+          offset: LIMIT * (Number(currentPage || 1) - 1),
         });
 
         if (res.status === 200) {
           setOrders(res.payload);
+          setTotalPage(res.pagination.totalPages)
         }
       } catch (error) {
         console.error("Failed to fetch orders", error);
@@ -244,7 +269,7 @@ const OrderTab = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [currentPage]);
 
   return (
     <>
@@ -279,6 +304,15 @@ const OrderTab = () => {
           onClose={() => setSelectedOrder(null)}
         />
       )}
+      <Pagination
+        initialPage={1}
+        className="mx-auto w-fit mt-2"
+        page={Number(currentPage || 1)}
+        total={totalPage ?? 1}
+        onChange={(e) => {
+          setCurrentPage(e);
+        }}
+      />
     </>
   );
 };

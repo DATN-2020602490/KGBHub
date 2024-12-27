@@ -26,7 +26,12 @@ export const userApiRequest = {
 
   getCourseProgress: () => http.get('/users/actions/progress'),
 
-  getCourseBought: () => http.get<Course[]>('/users/actions/bought'),
+  getCourseBought: (data?: { limit: number, offset: number }) => {
+    if (!data) {
+      data = { limit: 8, offset: 0 }
+    }
+    return http.get<Course[]>('/users/actions/bought?limit=' + data.limit + '&offset=' + data.offset)
+  },
 
   getWishList: () => http.get('/users/actions/hearted', { cache: 'no-store' }),
 
