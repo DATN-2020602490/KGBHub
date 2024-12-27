@@ -68,12 +68,16 @@ export default class CampaignController extends BaseController {
     const order = req.gp<string>("direction", "desc", ["asc", "desc"]);
     const search = req.gp<string>("search", null, checkBadWord);
     const type = req.gp<CampaignType>("type", null, CampaignType);
+    const active = req.gp<string>("active", null, String);
     const where = {};
     if (search) {
       where["searchAccent"] = { contains: removeAccent(search) };
     }
     if (type) {
       where["type"] = type;
+    }
+    if (active) {
+      where["active"] = active === "true";
     }
     const campaigns = await this.prisma.campaign.findMany({
       where,

@@ -1,35 +1,47 @@
-'use client'
-import { Heading } from '@/components/common/heading'
-import { generateMediaLink } from '@/lib/utils'
-import { useCampaigns, useJoinCampaignMutation } from '@/queries/useCampaigns'
-import { Button } from '@nextui-org/react'
-import Image from 'next/image'
-import { toast } from 'react-toastify'
+"use client";
+import { Heading } from "@/components/common/heading";
+import { generateMediaLink } from "@/lib/utils";
+import { useCampaigns, useJoinCampaignMutation } from "@/queries/useCampaigns";
+import { Button, Pagination } from "@nextui-org/react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { toast } from "react-toastify";
 
-export default function PromotionsPage() {
-  const { data, isLoading } = useCampaigns()
-  const joinCampaignMutation = useJoinCampaignMutation()
+type Props = {
+  searchParams: { page: string }
+}
+
+const LIMIT = 12
+
+export default function PromotionsPage({ searchParams }: Props) {
+  const { page } = searchParams
+  const { data, isLoading } = useCampaigns(`?active=true&limit=${LIMIT}&offset=${LIMIT * (Number(page || 1) - 1)}`);
+  const joinCampaignMutation = useJoinCampaignMutation();
+    const { push } = useRouter()
   const claimPromotion = async (campaignId: string) => {
     try {
-      await joinCampaignMutation.mutateAsync(campaignId)
-      toast.success('Claimed promotion successfully!')
+      await joinCampaignMutation.mutateAsync(campaignId);
+      toast.success("Claimed promotion successfully!");
     } catch (error) {
-      console.log(error)
-      toast.error('Could not claim promotion!')
+      console.log(error);
+      toast.error("Could not claim promotion!");
     }
-  }
-  console.log(data)
+  };
+    const totalPage = useMemo(
+      () => data?.pagination?.totalPages,
+      [data?.pagination?.totalPages]
+    )
   return (
     <>
       <Heading title="Promotions" className="mb-6" />
       <div className="mb-8 text-sm">
         <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime autem
-          eum, dolore impedit, ullam asperiores tempora distinctio non id eos
-          quo cum ipsum quaerat quia sequi voluptates vitae voluptate, obcaecati
-          esse veniam voluptatibus expedita laudantium! Quaerat optio temporibus
-          unde voluptatibus possimus vero numquam atque! Ad rem reprehenderit
-          nesciunt rerum iste?
+          Unlock exclusive deals and promotions tailored just for you! Discover
+          a variety of exciting offers designed to save you money while bringing
+          you the best value for your purchases. These promotions are available
+          for a limited time, so don’t miss out on the chance to maximize your
+          savings.
         </p>
         <Image
           src="/images/get-promotion-banner-3.webp"
@@ -39,27 +51,13 @@ export default function PromotionsPage() {
           className="aspect-[21/9] object-cover w-[768px] mx-auto rounded-md my-6"
         />
         <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque
-          voluptatem veniam rerum atque ducimus provident magnam perferendis!
-          Quasi aperiam vel rem voluptatibus ratione perspiciatis deleniti velit
-          sunt! Laudantium obcaecati ipsam mollitia ex maxime, adipisci libero
-          blanditiis sit cupiditate, saepe alias? Veritatis dolores, consectetur
-          voluptates adipisci asperiores commodi dolore non harum obcaecati
-          nostrum velit repudiandae perferendis quisquam pariatur unde,
-          necessitatibus neque alias magni et. Doloremque mollitia laborum
-          debitis tenetur eum ullam quidem unde adipisci dolor enim illum soluta
-          assumenda neque rem expedita, fugit vero molestias blanditiis
-          quibusdam eius, voluptatum exercitationem beatae pariatur recusandae.
-          Quis ducimus repudiandae distinctio laudantium? Animi, numquam
-          nostrum. Tempora officiis debitis similique modi neque iusto voluptate
-          cupiditate nemo. Laboriosam reiciendis quisquam et harum architecto
-          dignissimos dicta, nam facere ut vero fugiat cum a tenetur illum ea
-          aut nisi ullam ducimus suscipit quia distinctio nemo. Quisquam
-          repellat rem, consequatur repellendus fugiat obcaecati rerum esse
-          quasi beatae facere, quas dolore recusandae sit enim delectus
-          voluptatibus! Nemo autem eaque fuga corporis distinctio et ipsam
-          exercitationem, velit sequi voluptates architecto ut reprehenderit vel
-          vitae doloremque est unde eum temporibus repudiandae beatae tenetur?
+          Claiming your promotion is quick and easy. Follow the steps below to
+          unlock discounts, rewards, or special gifts. With just a few clicks,
+          you can enjoy benefits that elevate your shopping experience. Act
+          fast—quantities are limited, and the clock is ticking. Don’t wait
+          until it’s too late! Make sure you secure your spot and take advantage
+          of these incredible deals today. Click the button below to start the
+          process and make the most of these time-sensitive promotions!
         </p>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -90,7 +88,7 @@ export default function PromotionsPage() {
               <div className="bg-blue-300 rounded- h-2/3 relative border-b-2 border-gray-500 border-dashed flex items-center justify-center px-4">
                 <div>
                   <Image
-                    src={generateMediaLink(campaign.coverFileId ?? '')}
+                    src={generateMediaLink(campaign.coverFileId ?? "")}
                     alt={campaign.name}
                     width={400}
                     height={300}
@@ -107,17 +105,26 @@ export default function PromotionsPage() {
               <div className="flex-1 flex justify-center items-center bg-blue-300">
                 <Button
                   onClick={() => claimPromotion(campaign.id)}
-                  color={campaign.isJoined ? 'default' : 'primary'}
+                  color={campaign.isJoined ? "default" : "primary"}
                   className="px-8 disabled:opacity-75"
                   disabled={campaign.isJoined}
                 >
-                  {campaign.isJoined ? 'Claimed' : 'Claim'}
+                  {campaign.isJoined ? "Claimed" : "Claim"}
                 </Button>
               </div>
             </div>
           ))
         )}
       </div>
+      <Pagination
+        initialPage={1}
+        className="mx-auto w-fit mt-2"
+        page={Number(page || 1)}
+        total={totalPage ?? 1}
+        onChange={(e) => {
+          push('/promotions?page=' + e, { scroll: false })
+        }}
+      />
     </>
-  )
+  );
 }
